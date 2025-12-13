@@ -1,0 +1,10 @@
+tensorflow==2.12.0
+coremltools==7.0
+scipy
+Pillow
+opencv-python
+
+requests
+bs4
+
+flask

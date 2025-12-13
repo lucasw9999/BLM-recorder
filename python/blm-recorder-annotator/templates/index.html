@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Dark Themed Screen Detection & Bounding Box Annotation</title>
+  <style>
+    /* DARK THEME */
+    body {
+      background-color: #2b2b2b;
+      color: #ddd;
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    h1, h2, label {
+      color: #fff;
+    }
+    .toolbar {
+      margin-bottom: 10px;
+    }
+    .toolbar input[type="file"],
+    .toolbar input[type="text"],
+    .toolbar button {
+      background-color: #444;
+      color: #ddd;
+      border: 1px solid #555;
+      padding: 5px;
+      margin: 5px;
+    }
+    .toolbar input[type="file"] {
+      padding: 3px;
+    }
+    .toolbar button:hover {
+      background-color: #666;
+      cursor: pointer;
+    }
+
+    #annotationContainer {
+      position: relative;
+      display: inline-block;
+      border: 1px solid #555;
+    }
+    #warpedImage {
+      display: block;
+      max-width: 800px;
+      border: 1px solid #555;
+    }
+    #annotationCanvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      cursor: crosshair;
+    }
+
+    .rect-list {
+      margin-top: 20px;
+      max-width: 600px;
+      background-color: #333;
+      padding: 10px;
+      border: 1px solid #555;
+    }
+    .rect-list strong {
+      color: #fff;
+    }
+    .rect-item {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      margin-bottom: 8px;
+      background-color: #444;
+      padding: 5px;
+      border: 1px solid #555;
+    }
+    .rect-item input[type="text"] {
+      background-color: #333;
+      color: #ddd;
+      border: 1px solid #555;
+      margin-right: 5px;
+      flex: 1;
+      padding: 3px;
+    }
+    .rect-item .format-input {
+      flex: 2; /* wider input for formats */
+    }
+    .rect-item button {
+      background-color: #666;
+      color: #ddd;
+      border: 1px solid #555;
+      margin-left: 5px;
+      padding: 3px 6px;
+    }
+    .rect-item button:hover {
+      background-color: #777;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Dark Themed Screen Detection & Bounding Box Annotation</h1>
+
+<div class="toolbar">
+  <label for="fileInput">Select image:</label>
+  <input type="file" id="fileInput" accept="image/*" />
+  <button id="loadImageBtn">Upload & Warp</button>
+</div>
+
+<div id="annotationContainer">
+  <img id="warpedImage" src="" alt="Warped Image" />
+  <canvas id="annotationCanvas"></canvas>
+</div>
+
+<!-- Save / Load JSON -->
+<div class="toolbar">
+  <label for="saveFilename">Save Filename:</label>
+  <input type="text" id="saveFilename" placeholder="annotations.json" />
+  <button id="saveBtn">Save</button>
+
+  <label for="loadFilename">Load Filename:</label>
+  <input type="text" id="loadFilename" placeholder="annotations.json" />
+  <button id="loadBtn">Load</button>
+</div>
+
+<!-- List of rectangles -->
+<div class="rect-list">
+  <strong>Rectangles:</strong>
+  <div id="rectList"></div>
+</div>
+
+<script>
+  // -----------------------------------------------------------
+  // GLOBAL STATE
+  // -----------------------------------------------------------
+  let rects = [];  // Array of { name, x, y, width, height, format }
+  let imageWidth = 0, imageHeight = 0;  // displayed image dimensions
+  let isDrawing = false;
+  let startX = 0, startY = 0;
+  let boxCount = 1; // default naming, e.g. "Box 1", "Box 2", ...
+
+  const fileInput = document.getElementById("fileInput");
+  const loadImageBtn = document.getElementById("loadImageBtn");
+  const warpedImage = document.getElementById("warpedImage");
+  const annotationCanvas = document.getElementById("annotationCanvas");
+  const ctx = annotationCanvas.getContext("2d");
+
+  const saveBtn = document.getElementById("saveBtn");
+  const loadBtn = document.getElementById("loadBtn");
+  const saveFilenameInput = document.getElementById("saveFilename");
+  const loadFilenameInput = document.getElementById("loadFilename");
+  const rectList = document.getElementById("rectList");
+
+  // -----------------------------------------------------------
+  // DRAW ALL RECTANGLES
+  // -----------------------------------------------------------
+  function drawRectangles() {
+    ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+    rects.forEach(r => {
+      const px = toPixelCoords(r);
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "blue";
+      ctx.rect(px.x, px.y, px.width, px.height);
+      ctx.stroke();
+
+      // Name text in top-left
+      ctx.fillStyle = "blue";
+      ctx.fillText(r.name, px.x + 5, px.y + 15);
+    });
+  }
+
+  // -----------------------------------------------------------
+  // NORMALIZED <--> PIXEL COORDS
+  // -----------------------------------------------------------
+  function toPixelCoords(r) {
+    return {
+      x: r.x * imageWidth,
+      y: r.y * imageHeight,
+      width: r.width * imageWidth,
+      height: r.height * imageHeight
+    };
+  }
+  function toNormalizedCoords(x, y, w, h) {
+    return {
+      x: x / imageWidth,
+      y: y / imageHeight,
+      width: w / imageWidth,
+      height: h / imageHeight
+    };
+  }
+
+  // -----------------------------------------------------------
+  // REFRESH THE LIST OF RECTANGLES (DOM)
+  // -----------------------------------------------------------
+  function refreshRectList() {
+    rectList.innerHTML = "";
+
+    rects.forEach((r, idx) => {
+      const rowDiv = document.createElement("div");
+      rowDiv.className = "rect-item";
+
+      // NAME INPUT
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.value = r.name;
+      nameInput.addEventListener("change", () => {
+        r.name = nameInput.value;
+        drawRectangles();
+      });
+
+      // FORMAT INPUT
+      const formatInput = document.createElement("input");
+      formatInput.type = "text";
+      formatInput.className = "format-input";
+      // Join the array into comma-separated string
+      formatInput.value = (r.format && r.format.length > 0) ? r.format.join(", ") : "";
+      formatInput.addEventListener("change", () => {
+        // Parse the comma-separated string into an array
+        const rawValue = formatInput.value.trim();
+        if (rawValue === "") {
+          r.format = [];
+        } else {
+          r.format = rawValue.split(",").map(s => s.trim()).filter(s => s.length > 0);
+        }
+      });
+
+      // DELETE BUTTON
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", () => {
+        rects.splice(idx, 1);
+        drawRectangles();
+        refreshRectList();
+      });
+
+      rowDiv.appendChild(nameInput);
+      rowDiv.appendChild(formatInput);
+      rowDiv.appendChild(deleteBtn);
+      rectList.appendChild(rowDiv);
+    });
+  }
+
+  // -----------------------------------------------------------
+  // CANVAS EVENTS: CLICK-DRAG TO CREATE A NEW RECT
+  // -----------------------------------------------------------
+  annotationCanvas.addEventListener("mousedown", (e) => {
+    isDrawing = true;
+    const rect = annotationCanvas.getBoundingClientRect();
+    startX = e.clientX - rect.left;
+    startY = e.clientY - rect.top;
+  });
+
+  annotationCanvas.addEventListener("mousemove", (e) => {
+    if (!isDrawing) return;
+    const rect = annotationCanvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Clear + redraw existing
+    ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+    drawRectangles();
+
+    // Temporary rectangle
+    let w = mouseX - startX;
+    let h = mouseY - startY;
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "lime";
+    ctx.rect(startX, startY, w, h);
+    ctx.stroke();
+  });
+
+  annotationCanvas.addEventListener("mouseup", (e) => {
+    if (!isDrawing) return;
+    isDrawing = false;
+
+    const rect = annotationCanvas.getBoundingClientRect();
+    const endX = e.clientX - rect.left;
+    const endY = e.clientY - rect.top;
+
+    let x = startX;
+    let y = startY;
+    let w = endX - startX;
+    let h = endY - startY;
+
+    if (w < 0) {
+      x += w;
+      w = Math.abs(w);
+    }
+    if (h < 0) {
+      y += h;
+      h = Math.abs(h);
+    }
+
+    // Ignore trivial rectangles
+    if (w < 5 || h < 5) {
+      drawRectangles();
+      return;
+    }
+
+    // Add new rect object
+    const norm = toNormalizedCoords(x, y, w, h);
+    rects.push({
+      name: `Box ${boxCount++}`,
+      x: norm.x,
+      y: norm.y,
+      width: norm.width,
+      height: norm.height,
+      format: []
+    });
+
+    drawRectangles();
+    refreshRectList();
+  });
+
+  // -----------------------------------------------------------
+  // UPLOAD & WARP IMAGE
+  // -----------------------------------------------------------
+  loadImageBtn.addEventListener("click", () => {
+    if (!fileInput.files.length) {
+      alert("Please select an image first.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", fileInput.files[0]);
+
+    fetch("/process_image", {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      const warpedFilename = data.filename;
+      // Reset
+      rects = [];
+      boxCount = 1;
+      refreshRectList();
+
+      warpedImage.src = "/uploads/" + warpedFilename;
+      warpedImage.onload = () => {
+        imageWidth = warpedImage.width;
+        imageHeight = warpedImage.height;
+        annotationCanvas.width = imageWidth;
+        annotationCanvas.height = imageHeight;
+        ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+      };
+    })
+    .catch(err => {
+      console.error("Error processing image:", err);
+    });
+  });
+
+  // -----------------------------------------------------------
+  // SAVE JSON (new format)
+  // -----------------------------------------------------------
+  saveBtn.addEventListener("click", () => {
+    const filename = saveFilenameInput.value.trim() || "annotations.json";
+
+    // Prepare array of objects
+    const rectArray = rects.map(r => ({
+      name: r.name,
+      rect: [r.x, r.y, r.width, r.height],
+      format: r.format || []
+    }));
+
+    fetch("/save_json", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        filename: filename,
+        rects: rectArray
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message || "Saved!");
+    })
+    .catch(err => {
+      console.error("Error saving JSON:", err);
+    });
+  });
+
+  // -----------------------------------------------------------
+  // LOAD JSON (new format)
+  // -----------------------------------------------------------
+  loadBtn.addEventListener("click", () => {
+    const filename = loadFilenameInput.value.trim();
+    if (!filename) {
+      alert("Please specify a JSON file to load.");
+      return;
+    }
+
+    fetch("/load_json", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ filename: filename })
+    })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error("File not found or load error");
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (data.status === "success") {
+        // data.rects is an array of objects:
+        // [
+        //   { name, rect: [x,y,w,h], format: [...] },
+        //   ...
+        // ]
+        rects = [];
+        boxCount = 1; // reset the naming counter
+
+        data.rects.forEach(item => {
+          const [x, y, w, h] = item.rect;
+          rects.push({
+            name: item.name || `Box ${boxCount++}`,
+            x: x,
+            y: y,
+            width: w,
+            height: h,
+            format: Array.isArray(item.format) ? item.format : []
+          });
+
+          // if the item name is "Box N" we can update boxCount
+          const match = (item.name || "").match(/^Box\s+(\d+)$/);
+          if (match) {
+            const parsedNum = parseInt(match[1], 10);
+            if (parsedNum >= boxCount) {
+              boxCount = parsedNum + 1;
+            }
+          }
+        });
+
+        drawRectangles();
+        refreshRectList();
+      } else {
+        alert(data.message || "Error loading rects");
+      }
+    })
+    .catch(err => {
+      alert(err.message);
+      console.error("Error loading JSON:", err);
+    });
+  });
+</script>
+
+</body>
+</html>
