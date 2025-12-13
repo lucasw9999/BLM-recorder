@@ -55,7 +55,7 @@ An iOS app for the Bushnell Launch Pro (BLP) golf launch monitor that provides r
 
 ## Quick Start
 
-1. Mount your iPhone on the BLP using the 3D printed holder
+1. Mount your iPhone on the BLP
 2. Launch the app
 3. Take a shot - data appears automatically
 
