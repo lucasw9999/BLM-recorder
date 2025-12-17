@@ -146,6 +146,14 @@ NSString *formattedStringFromInteger(NSInteger value) {
     titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
     [headerView addSubview:titleLabel];
 
+    // Theme toggle button (before mode pill)
+    UIButton *themeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    themeButton.frame = CGRectMake(self.view.bounds.size.width - 110, 7, 30, 21);
+    [themeButton setTitle:@"🌙" forState:UIControlStateNormal];
+    themeButton.titleLabel.font = [UIFont systemFontOfSize:16];
+    [themeButton addTarget:self action:@selector(toggleTheme:) forControlEvents:UIControlEventTouchUpInside];
+    [headerView addSubview:themeButton];
+
     // Mode pill (right) - smaller and adjusted position
     UIView *modePill = [[UIView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 70, 7, 50, 21)];
     modePill.backgroundColor = APP_COLOR_ACCENT;
@@ -158,6 +166,17 @@ NSString *formattedStringFromInteger(NSInteger value) {
     modeLabel.font = [UIFont systemFontOfSize:10 weight:UIFontWeightSemibold];
     modeLabel.textAlignment = NSTextAlignmentCenter;
     [modePill addSubview:modeLabel];
+}
+
+- (void)toggleTheme:(UIButton *)sender {
+    UIWindow *window = self.view.window;
+    if (window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark) {
+        window.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+        [sender setTitle:@"🌙" forState:UIControlStateNormal];
+    } else {
+        window.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+        [sender setTitle:@"☀️" forState:UIControlStateNormal];
+    }
 }
 
 
