@@ -154,21 +154,21 @@ NSString *formattedStringFromInteger(NSInteger value) {
     [themeSwitch addTarget:self action:@selector(toggleTheme:) forControlEvents:UIControlEventValueChanged];
     [headerView addSubview:themeSwitch];
 
-    // Add sun icon on left side of switch
-    UILabel *sunLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 5, 9, 15, 15)];
-    sunLabel.text = @"☀️";
-    sunLabel.font = [UIFont systemFontOfSize:10];
-    sunLabel.alpha = themeSwitch.isOn ? 0.3 : 1.0; // Dim when in dark mode
-    sunLabel.tag = 999; // Tag to find later
-    [headerView addSubview:sunLabel];
+    // Add sun icon on left side of switch (SF Symbol)
+    UIImageView *sunIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 4, 9.5, 12, 12)];
+    sunIcon.image = [UIImage systemImageNamed:@"sun.max.fill"];
+    sunIcon.tintColor = [UIColor systemYellowColor];
+    sunIcon.alpha = themeSwitch.isOn ? 0.3 : 1.0; // Dim when in dark mode
+    sunIcon.tag = 999; // Tag to find later
+    [headerView addSubview:sunIcon];
 
-    // Add moon icon on right side of switch
-    UILabel *moonLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 51 * 0.65 - 15, 9, 15, 15)];
-    moonLabel.text = @"🌙";
-    moonLabel.font = [UIFont systemFontOfSize:10];
-    moonLabel.alpha = themeSwitch.isOn ? 1.0 : 0.3; // Dim when in light mode
-    moonLabel.tag = 998; // Tag to find later
-    [headerView addSubview:moonLabel];
+    // Add moon icon on right side of switch (SF Symbol)
+    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 51 * 0.65 - 16, 9.5, 12, 12)];
+    moonIcon.image = [UIImage systemImageNamed:@"moon.fill"];
+    moonIcon.tintColor = [UIColor systemYellowColor];
+    moonIcon.alpha = themeSwitch.isOn ? 1.0 : 0.3; // Dim when in light mode
+    moonIcon.tag = 998; // Tag to find later
+    [headerView addSubview:moonIcon];
 
     // Mode pill (right) - smaller and adjusted position
     UIView *modePill = [[UIView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 70, 7, 50, 21)];
@@ -193,10 +193,10 @@ NSString *formattedStringFromInteger(NSInteger value) {
     }
 
     // Update sun/moon icon alpha based on switch state
-    UILabel *sunLabel = (UILabel *)[self.view viewWithTag:999];
-    UILabel *moonLabel = (UILabel *)[self.view viewWithTag:998];
-    sunLabel.alpha = sender.isOn ? 0.3 : 1.0;
-    moonLabel.alpha = sender.isOn ? 1.0 : 0.3;
+    UIImageView *sunIcon = (UIImageView *)[self.view viewWithTag:999];
+    UIImageView *moonIcon = (UIImageView *)[self.view viewWithTag:998];
+    sunIcon.alpha = sender.isOn ? 0.3 : 1.0;
+    moonIcon.alpha = sender.isOn ? 1.0 : 0.3;
 }
 
 
