@@ -173,11 +173,11 @@ static DataModel *_sharedInstance = nil;
     NSDictionary *data = notification.userInfo[@"data"];
     if (!data)
         return;
-    
+
     self.currentShotBallData = [data copy];
-    self.currentShotClubData = nil;
+    // Don't clear club data - let it persist until new club data arrives
     self.shotNumber++;
-    
+
     NSLog(@"Got new BALL data (shot #%d): %@", self.shotNumber, data);
     
     [self.shotManager addShot:self.currentShotBallData];
