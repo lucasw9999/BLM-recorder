@@ -3,11 +3,14 @@
 #import "ScreenDataProcessor.h"
 #import "DataModel.h"
 #import "MainContainerViewController.h"
+#import "CameraManager.h"
 
 @interface ImagesViewController ()
 @property (nonatomic, strong) UIImageView *ballDataImageView;
 @property (nonatomic, strong) UIImageView *clubDataImageView;
 @property (nonatomic, strong) UIView *cameraContainer;
+@property (nonatomic, strong) UIImageView *cameraView;
+@property (nonatomic, strong) NSArray<NSValue *> *corners;
 
 @end
 
@@ -38,7 +41,7 @@
     self.clubDataImageView.layer.borderWidth = 1.0;
     [self.view addSubview:self.clubDataImageView];
 
-    // Right side: Camera placeholder
+    // Right side: Camera view
     self.cameraContainer = [[UIView alloc] init];
     self.cameraContainer.backgroundColor = [UIColor blackColor];
     // Add border
@@ -46,15 +49,24 @@
     self.cameraContainer.layer.borderWidth = 1.0;
     [self.view addSubview:self.cameraContainer];
 
-    // Add camera placeholder label
-    UILabel *cameraLabel = [[UILabel alloc] init];
-    cameraLabel.text = @"Camera";
-    cameraLabel.textColor = [UIColor grayColor];
-    cameraLabel.textAlignment = NSTextAlignmentCenter;
-    cameraLabel.font = [UIFont systemFontOfSize:20];
-    cameraLabel.frame = CGRectMake(0, 0, 200, 40);
-    cameraLabel.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-    [self.cameraContainer addSubview:cameraLabel];
+    // Camera image view for displaying live camera feed
+    self.cameraView = [[UIImageView alloc] init];
+    self.cameraView.contentMode = UIViewContentModeScaleAspectFit;
+    self.cameraView.clipsToBounds = YES;
+    [self.cameraContainer addSubview:self.cameraView];
+
+    // Listen for camera frames and detected corners
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateCameraFrame:)
+                                                 name:CameraManagerNewFrameNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateCorners:)
+                                                 name:ScreenDataProcessorNewCornersNotification
+                                               object:nil];
+
+    self.corners = [[DataModel shared].screenCorners copy];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleNewBallData:)
@@ -130,12 +142,69 @@
                                             rightWidth,
                                             availableHeight);
 
-    // Center the camera label
-    for (UIView *subview in self.cameraContainer.subviews) {
-        if ([subview isKindOfClass:[UILabel class]]) {
-            subview.center = CGPointMake(rightWidth / 2, availableHeight / 2);
-        }
-    }
+    // Camera view fills the container
+    self.cameraView.frame = self.cameraContainer.bounds;
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self updateCameraFrame:nil]; // Ensure the latest frame is displayed when switching tabs
+}
+
+- (void)updateCameraFrame:(NSNotification *)notification {
+    UIImage *latestFrame = notification.userInfo[@"frame"];
+    if (!latestFrame)
+        return;
+
+    // Draw the detected corners on the frame
+    UIImage *processedImage = [self drawPolygonOnImage:latestFrame corners:self.corners];
+
+    // Update UI on main thread
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.cameraView.image = processedImage;
+    });
+}
+
+- (void)updateCorners:(NSNotification *)notification {
+    NSArray *corners = notification.userInfo[@"corners"];
+    if (!corners)
+        return;
+
+    self.corners = [corners copy];
+}
+
+// Draws detected corners onto the frame
+- (UIImage *)drawPolygonOnImage:(UIImage *)image corners:(NSArray<NSValue *> *)corners {
+    if (!image || corners.count < 4) return image;
+
+    UIGraphicsBeginImageContextWithOptions(image.size, NO, 0);
+    [image drawInRect:CGRectMake(0, 0, image.size.width, image.size.height)];
+
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetStrokeColorWithColor(context, [UIColor greenColor].CGColor);
+    CGContextSetLineWidth(context, 5.0);
+
+    CGPoint p1 = [corners[0] CGPointValue];
+    CGPoint p2 = [corners[1] CGPointValue];
+    CGPoint p3 = [corners[2] CGPointValue];
+    CGPoint p4 = [corners[3] CGPointValue];
+
+    // For some reason, these need to be flipped in both X and Y...
+    p1.x = image.size.width-1 - p1.x; p1.y = image.size.height-1 - p1.y;
+    p2.x = image.size.width-1 - p2.x; p2.y = image.size.height-1 - p2.y;
+    p3.x = image.size.width-1 - p3.x; p3.y = image.size.height-1 - p3.y;
+    p4.x = image.size.width-1 - p4.x; p4.y = image.size.height-1 - p4.y;
+
+    CGContextMoveToPoint(   context, p1.x, p1.y);
+    CGContextAddLineToPoint(context, p2.x, p2.y);
+    CGContextAddLineToPoint(context, p3.x, p3.y);
+    CGContextAddLineToPoint(context, p4.x, p4.y);
+    CGContextClosePath(context);
+    CGContextStrokePath(context);
+
+    UIImage *output = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return output;
 }
 
 - (void)handleNewBallData:(NSNotification *)notification {
@@ -187,6 +256,10 @@
     if (self.parentContainer) {
         [self.parentContainer switchToPreviousTab];
     }
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end
