@@ -323,13 +323,13 @@
     titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline]; // Dynamic Type
     [headerView addSubview:titleLabel];
 
-    // Theme toggle button (before mode pill)
-    UIButton *themeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    themeButton.frame = CGRectMake(self.view.bounds.size.width - 115, 7, 30, 21);
-    [themeButton setTitle:@"🌙" forState:UIControlStateNormal];
-    themeButton.titleLabel.font = [UIFont systemFontOfSize:16];
-    [themeButton addTarget:self action:@selector(toggleTheme:) forControlEvents:UIControlEventTouchUpInside];
-    [headerView addSubview:themeButton];
+    // Theme toggle switch (before mode pill) - aligned with mode pill height
+    UISwitch *themeSwitch = [[UISwitch alloc] init];
+    themeSwitch.transform = CGAffineTransformMakeScale(0.65, 0.65); // Scale down to match mode pill height (21pt)
+    themeSwitch.frame = CGRectMake(self.view.bounds.size.width - 120, 7, 51 * 0.65, 31 * 0.65);
+    themeSwitch.on = (self.view.window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
+    [themeSwitch addTarget:self action:@selector(toggleTheme:) forControlEvents:UIControlEventValueChanged];
+    [headerView addSubview:themeSwitch];
 
     // Mode pill (right) - Improved styling
     UIView *modePill = [[UIView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 75, 7, 55, 21)];
@@ -345,14 +345,12 @@
     [modePill addSubview:modeLabel];
 }
 
-- (void)toggleTheme:(UIButton *)sender {
+- (void)toggleTheme:(UISwitch *)sender {
     UIWindow *window = self.view.window;
-    if (window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark) {
-        window.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        [sender setTitle:@"🌙" forState:UIControlStateNormal];
-    } else {
+    if (sender.isOn) {
         window.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
-        [sender setTitle:@"☀️" forState:UIControlStateNormal];
+    } else {
+        window.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
     }
 }
 
