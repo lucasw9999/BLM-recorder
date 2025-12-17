@@ -163,7 +163,8 @@ NSString *formattedStringFromInteger(NSInteger value) {
     [headerView addSubview:sunIcon];
 
     // Add moon icon on right side of switch (SF Symbol)
-    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 51 * 0.65 - 12 - 2, 9.5, 12, 12)];
+    // Switch width is 51 * 0.65 = 33.15, so position icon at right edge with 1px padding
+    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + (51 * 0.65) - 13, 9.5, 12, 12)];
     moonIcon.image = [UIImage systemImageNamed:@"moon.fill"];
     moonIcon.tintColor = [UIColor systemYellowColor];
     moonIcon.alpha = themeSwitch.isOn ? 1.0 : 0.3; // Dim when in light mode
