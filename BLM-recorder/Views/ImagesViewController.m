@@ -91,7 +91,7 @@
     // BLM Recorder title (left) - smaller and adjusted position
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 5, 200, 25)];
     titleLabel.text = @"BLM Recorder";
-    titleLabel.textColor = [UIColor whiteColor];
+    titleLabel.textColor = APP_COLOR_TEXT; // Adaptive: black in light mode, white in dark mode
     titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
     [headerView addSubview:titleLabel];
 
