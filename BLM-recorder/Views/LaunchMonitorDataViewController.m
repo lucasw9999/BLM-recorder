@@ -149,10 +149,26 @@ NSString *formattedStringFromInteger(NSInteger value) {
     // Theme toggle switch (before mode pill) - aligned with mode pill height
     UISwitch *themeSwitch = [[UISwitch alloc] init];
     themeSwitch.transform = CGAffineTransformMakeScale(0.65, 0.65); // Scale down to match mode pill height (21pt)
-    themeSwitch.frame = CGRectMake(self.view.bounds.size.width - 115, 7, 51 * 0.65, 31 * 0.65);
+    themeSwitch.frame = CGRectMake(self.view.bounds.size.width - 140, 7, 51 * 0.65, 31 * 0.65);
     themeSwitch.on = (self.view.window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
     [themeSwitch addTarget:self action:@selector(toggleTheme:) forControlEvents:UIControlEventValueChanged];
     [headerView addSubview:themeSwitch];
+
+    // Add sun icon on left side of switch
+    UILabel *sunLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 5, 9, 15, 15)];
+    sunLabel.text = @"☀️";
+    sunLabel.font = [UIFont systemFontOfSize:10];
+    sunLabel.alpha = themeSwitch.isOn ? 0.3 : 1.0; // Dim when in dark mode
+    sunLabel.tag = 999; // Tag to find later
+    [headerView addSubview:sunLabel];
+
+    // Add moon icon on right side of switch
+    UILabel *moonLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 51 * 0.65 - 15, 9, 15, 15)];
+    moonLabel.text = @"🌙";
+    moonLabel.font = [UIFont systemFontOfSize:10];
+    moonLabel.alpha = themeSwitch.isOn ? 1.0 : 0.3; // Dim when in light mode
+    moonLabel.tag = 998; // Tag to find later
+    [headerView addSubview:moonLabel];
 
     // Mode pill (right) - smaller and adjusted position
     UIView *modePill = [[UIView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 70, 7, 50, 21)];
@@ -175,6 +191,12 @@ NSString *formattedStringFromInteger(NSInteger value) {
     } else {
         window.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
     }
+
+    // Update sun/moon icon alpha based on switch state
+    UILabel *sunLabel = (UILabel *)[self.view viewWithTag:999];
+    UILabel *moonLabel = (UILabel *)[self.view viewWithTag:998];
+    sunLabel.alpha = sender.isOn ? 0.3 : 1.0;
+    moonLabel.alpha = sender.isOn ? 1.0 : 0.3;
 }
 
 
