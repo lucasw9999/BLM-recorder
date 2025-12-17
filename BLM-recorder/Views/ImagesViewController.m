@@ -24,17 +24,26 @@
     self.ballDataImageView.backgroundColor = [UIColor blackColor];
     self.ballDataImageView.contentMode = UIViewContentModeScaleAspectFit;
     self.ballDataImageView.image = [DataModel shared].currentShotBallImage;
+    // Add border
+    self.ballDataImageView.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
+    self.ballDataImageView.layer.borderWidth = 1.0;
     [self.view addSubview:self.ballDataImageView];
 
     self.clubDataImageView = [[UIImageView alloc] init];
     self.clubDataImageView.backgroundColor = [UIColor blackColor];
     self.clubDataImageView.contentMode = UIViewContentModeScaleAspectFit;
     self.clubDataImageView.image = [DataModel shared].currentShotClubImage;
+    // Add border
+    self.clubDataImageView.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
+    self.clubDataImageView.layer.borderWidth = 1.0;
     [self.view addSubview:self.clubDataImageView];
 
     // Right side: Camera placeholder
     self.cameraContainer = [[UIView alloc] init];
     self.cameraContainer.backgroundColor = [UIColor blackColor];
+    // Add border
+    self.cameraContainer.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
+    self.cameraContainer.layer.borderWidth = 1.0;
     [self.view addSubview:self.cameraContainer];
 
     // Add camera placeholder label
@@ -95,12 +104,13 @@
     UIEdgeInsets safeInsets = self.view.safeAreaInsets;
     CGFloat margin = 0;
     CGFloat headerHeight = 55; // 20 for top offset + 35 for smaller header height
+    CGFloat gap = 4; // Small gap in the middle
 
     CGFloat availableWidth = self.view.bounds.size.width - safeInsets.left - safeInsets.right - margin * 2;
     CGFloat availableHeight = self.view.bounds.size.height - safeInsets.top - safeInsets.bottom - margin * 2 - headerHeight;
 
-    // LEFT half (50%): Monitor images - split vertically for ball (top) and club (bottom)
-    CGFloat leftWidth = availableWidth * 0.5;
+    // LEFT half (50% - half gap): Monitor images - split vertically for ball (top) and club (bottom)
+    CGFloat leftWidth = (availableWidth - gap) * 0.5;
     CGFloat imageHeight = availableHeight / 2;
 
     self.ballDataImageView.frame = CGRectMake(margin + safeInsets.left,
@@ -113,9 +123,9 @@
                                                leftWidth,
                                                imageHeight);
 
-    // RIGHT half (50%): Camera
-    CGFloat rightWidth = availableWidth * 0.5;
-    self.cameraContainer.frame = CGRectMake(margin + safeInsets.left + leftWidth,
+    // RIGHT half (50% - half gap): Camera
+    CGFloat rightWidth = (availableWidth - gap) * 0.5;
+    self.cameraContainer.frame = CGRectMake(margin + safeInsets.left + leftWidth + gap,
                                             headerHeight + margin + safeInsets.top,
                                             rightWidth,
                                             availableHeight);
