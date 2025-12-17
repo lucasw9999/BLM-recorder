@@ -54,11 +54,11 @@ NSString *formattedStringFromInteger(NSInteger value) {
     // Apply the chosen fonts and colors to the respective ranges
     NSRange valueRange = NSMakeRange(0, [value length]);
     [attributedString addAttribute:NSFontAttributeName value:valueFont range:valueRange];
-    [attributedString addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:valueRange]; // Values: bright white
+    [attributedString addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:valueRange]; // Adaptive: black in light mode, white in dark mode
 
     NSRange unitRange = NSMakeRange([value length], [unit length]);
     [attributedString addAttribute:NSFontAttributeName value:unitFont range:unitRange];
-    [attributedString addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.5 alpha:1.0] range:unitRange]; // Units: darker gray
+    [attributedString addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:unitRange]; // Adaptive gray
 
     return attributedString;
 }
@@ -124,7 +124,7 @@ NSString *formattedStringFromInteger(NSInteger value) {
     valueLabel.text = @"--";
 
     valueLabel.font = [UIFont boldSystemFontOfSize:fontSize];
-    valueLabel.textColor = [UIColor whiteColor];
+    valueLabel.textColor = APP_COLOR_TEXT;  // Adaptive: black in light mode, white in dark mode
     valueLabel.numberOfLines = 0; // Allow multiple lines for compact display
     valueLabel.adjustsFontSizeToFitWidth = YES; // Auto-resize to fit
     valueLabel.minimumScaleFactor = 0.6;
@@ -369,10 +369,10 @@ NSString *formattedStringFromInteger(NSInteger value) {
     NSMutableAttributedString *vlaAttr = [[NSMutableAttributedString alloc] initWithString:vlaFull];
     // Number: large and bold
     [vlaAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:32] range:NSMakeRange(0, vlaValue.length)];
-    [vlaAttr addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(0, vlaValue.length)];
+    [vlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:NSMakeRange(0, vlaValue.length)];  // Adaptive
     // Unit (°): same as other units
     [vlaAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(vlaValue.length, 1)];
-    [vlaAttr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.5 alpha:1.0] range:NSMakeRange(vlaValue.length, 1)];
+    [vlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(vlaValue.length, 1)];  // Adaptive gray
     self.valueLabels[@"VLA"].attributedText = vlaAttr;
 
     // Apex (height) - numbers big, units small
@@ -401,13 +401,13 @@ NSString *formattedStringFromInteger(NSInteger value) {
     NSMutableAttributedString *hlaAttr = [[NSMutableAttributedString alloc] initWithString:hlaFull];
     // Direction symbol: same as units
     [hlaAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0, 1)];
-    [hlaAttr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.5 alpha:1.0] range:NSMakeRange(0, 1)];
+    [hlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(0, 1)];  // Adaptive gray
     // Number: large and bold
     [hlaAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:32] range:NSMakeRange(1, hlaValue.length)];
-    [hlaAttr addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(1, hlaValue.length)];
+    [hlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:NSMakeRange(1, hlaValue.length)];  // Adaptive
     // Unit (°): same as other units
     [hlaAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(1 + hlaValue.length, 1)];
-    [hlaAttr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.5 alpha:1.0] range:NSMakeRange(1 + hlaValue.length, 1)];
+    [hlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(1 + hlaValue.length, 1)];  // Adaptive gray
     self.valueLabels[@"HLA"].attributedText = hlaAttr;
 
     // Ball speed - numbers big, units small
@@ -426,13 +426,13 @@ NSString *formattedStringFromInteger(NSInteger value) {
     NSMutableAttributedString *sideSpinAttr = [[NSMutableAttributedString alloc] initWithString:sideSpinFull];
     // Direction symbol: same as units
     [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0, 1)];
-    [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.5 alpha:1.0] range:NSMakeRange(0, 1)];
+    [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(0, 1)];  // Adaptive gray
     // Number: large and bold
     [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:32] range:NSMakeRange(1, sideSpinValue.length)];
-    [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(1, sideSpinValue.length)];
+    [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:NSMakeRange(1, sideSpinValue.length)];  // Adaptive
     // Unit (°): same as other units
     [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(1 + sideSpinValue.length, 1)];
-    [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.5 alpha:1.0] range:NSMakeRange(1 + sideSpinValue.length, 1)];
+    [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(1 + sideSpinValue.length, 1)];  // Adaptive gray
     self.valueLabels[@"Side Spin"].attributedText = sideSpinAttr;
 
     // Back Spin - numbers big, units small
@@ -482,13 +482,13 @@ NSString *formattedStringFromInteger(NSInteger value) {
         NSMutableAttributedString *pathAttr = [[NSMutableAttributedString alloc] initWithString:pathFull];
         // Direction symbol: same as units
         [pathAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0, 1)];
-        [pathAttr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.5 alpha:1.0] range:NSMakeRange(0, 1)];
+        [pathAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(0, 1)];  // Adaptive gray
         // Number: large and bold
         [pathAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:32] range:NSMakeRange(1, pathValue.length)];
-        [pathAttr addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(1, pathValue.length)];
+        [pathAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:NSMakeRange(1, pathValue.length)];  // Adaptive
         // Unit (°): same as other units
         [pathAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(1 + pathValue.length, 1)];
-        [pathAttr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.5 alpha:1.0] range:NSMakeRange(1 + pathValue.length, 1)];
+        [pathAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(1 + pathValue.length, 1)];  // Adaptive gray
         self.valueLabels[@"Path"].attributedText = pathAttr;
     }
 
