@@ -213,8 +213,8 @@ NSString *formattedStringFromInteger(NSInteger value) {
     [self addValueLabel:@"Efficiency" x:10 + clubItemWidth y:25 width:clubItemWidth view:clubCard];
     [self addValueLabel:@"Path" x:10 + clubItemWidth * 2 y:25 width:clubItemWidth view:clubCard];
     [self addValueLabel:@"AOA" x:10 + clubItemWidth * 3 y:25 width:clubItemWidth view:clubCard];
-    [self addValueLabel:@"Side Spin" x:10 + clubItemWidth * 4 y:25 width:clubItemWidth view:clubCard];
-    [self addValueLabel:@"Back Spin" x:10 + clubItemWidth * 5 y:25 width:clubItemWidth view:clubCard];
+    [self addValueLabel:@"Spin Axis" x:10 + clubItemWidth * 4 y:25 width:clubItemWidth view:clubCard];
+    [self addValueLabel:@"Total Spin" x:10 + clubItemWidth * 5 y:25 width:clubItemWidth view:clubCard];
 
     // Row 3: Mini Game section - reduced spacing for better layout
     CGFloat miniGameY = row2Y + clubCardHeight + 6; // Reduced spacing
@@ -417,7 +417,7 @@ NSString *formattedStringFromInteger(NSInteger value) {
     // Path with direction (like "<0.51°")
     // Note: Path data comes from club data, so we'll set this in setClubData
 
-    // Side Spin - direction symbol same as units, numbers big, units small
+    // Spin Axis - direction symbol same as units, numbers big, units small
     float spinAxis = [data[@"SpinAxis"] floatValue];
     NSString *sideSpinDirection = spinAxis < 0 ? @"<" : @">";
     NSString *sideSpinValue = [NSString stringWithFormat:@"%.2f", fabs(spinAxis)];
@@ -433,18 +433,18 @@ NSString *formattedStringFromInteger(NSInteger value) {
     // Unit (°): same as other units
     [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(1 + sideSpinValue.length, 1)];
     [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(1 + sideSpinValue.length, 1)];  // Adaptive gray
-    self.valueLabels[@"Side Spin"].attributedText = sideSpinAttr;
+    self.valueLabels[@"Spin Axis"].attributedText = sideSpinAttr;
 
-    // Back Spin - numbers big, units small
+    // Total Spin - numbers big, units small
     float totalSpin = [data[@"TotalSpin"] floatValue];
     NSString *totalSpinValue = [NSString stringWithFormat:@"%.0f", totalSpin];
-    self.valueLabels[@"Back Spin"].attributedText = [self attributedStringWithValue:totalSpinValue unit:@" rpm" fontSize:32];
+    self.valueLabels[@"Total Spin"].attributedText = [self attributedStringWithValue:totalSpinValue unit:@" rpm" fontSize:32];
 
     if([data[@"IsPutt"] boolValue] == YES) {
         self.valueLabels[@"Carry"].attributedText = [self attributedStringWithValue:@"--" unit:@" ft" fontSize:32];
         self.valueLabels[@"VLA"].text = @"--";
         self.valueLabels[@"Apex"].attributedText = [self attributedStringWithValue:@"--" unit:@" ft" fontSize:32];
-        self.valueLabels[@"Back Spin"].attributedText = [self attributedStringWithValue:@"--" unit:@" rpm" fontSize:32];
+        self.valueLabels[@"Total Spin"].attributedText = [self attributedStringWithValue:@"--" unit:@" rpm" fontSize:32];
     }
 }
 
