@@ -73,19 +73,26 @@ NSString *formattedStringFromInteger(NSInteger value) {
 
 - (UIView *)createCardWithTitle:(NSString *)title frame:(CGRect)frame {
     UIView *cardView = [[UIView alloc] initWithFrame:frame];
-    cardView.backgroundColor = [UIColor colorWithWhite:0.15 alpha:1.0]; // Dark card background
-    cardView.layer.cornerRadius = 8.0; // Slightly smaller radius for compact cards
-    cardView.layer.shadowColor = [UIColor blackColor].CGColor;
-    cardView.layer.shadowOffset = CGSizeMake(0, 1);
-    cardView.layer.shadowOpacity = 0.2;
-    cardView.layer.shadowRadius = 2.0;
 
-    // Add card title label (positioned for cards with larger fonts)
+    // Use iOS semantic colors for automatic dark mode support
+    cardView.backgroundColor = APP_COLOR_SECONDARY_BG;
+    cardView.layer.cornerRadius = CARD_CORNER_RADIUS; // 10pt per iOS standards
+
+    // Subtle shadow per Apple HIG
+    cardView.layer.shadowColor = SHADOW_COLOR;
+    cardView.layer.shadowOffset = SHADOW_OFFSET;
+    cardView.layer.shadowOpacity = SHADOW_OPACITY;
+    cardView.layer.shadowRadius = SHADOW_RADIUS;
+
+    // Add card title label with Dynamic Type support
     if (title) {
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 5, frame.size.width - 20, 18)];
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING,
+                                                                          SPACING_SMALL,
+                                                                          frame.size.width - (CARD_PADDING * 2),
+                                                                          20)];
         titleLabel.text = title;
-        titleLabel.font = [UIFont boldSystemFontOfSize:14]; // Increased from 12
-        titleLabel.textColor = APP_COLOR_ACCENT;
+        titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote]; // Dynamic Type
+        titleLabel.textColor = APP_COLOR_SECONDARY_TEXT;
         titleLabel.adjustsFontSizeToFitWidth = YES;
         titleLabel.minimumScaleFactor = 0.8;
         [cardView addSubview:titleLabel];

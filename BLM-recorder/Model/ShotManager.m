@@ -1,4 +1,5 @@
 #import "ShotManager.h"
+#import "RedisManager.h"
 
 @implementation ShotManager
 
@@ -8,13 +9,20 @@
     // Store it in shotList
     // Make a mutable copy so we can update it later if needed
     NSMutableDictionary *mutableShot = [shotDict mutableCopy];
-    
+
     if (self.miniGameManager) {
         NSDictionary* miniGameData = [self.miniGameManager addShot:shotDict];
         [mutableShot addEntriesFromDictionary:miniGameData];
     }
-    
+
     [self.shotList addObject:mutableShot];
+
+    // Record to Redis if configured (non-blocking, optional)
+    [[RedisManager shared] recordShotData:mutableShot completion:^(BOOL success, NSString * _Nullable error) {
+        if (!success && error) {
+            NSLog(@"Redis recording failed (non-critical): %@", error);
+        }
+    }];
 }
 
 #pragma mark - Update the Most Recent Shot's Club Data
