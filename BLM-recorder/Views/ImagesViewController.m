@@ -104,7 +104,7 @@
     [headerView addSubview:themeSwitch];
 
     // Add sun icon on left side of switch (SF Symbol)
-    UIImageView *sunIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 145 + 4, 9.5, 12, 12)];
+    UIImageView *sunIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 145 + 5, 9.5, 12, 12)];
     sunIcon.image = [UIImage systemImageNamed:@"sun.max.fill"];
     sunIcon.tintColor = [UIColor systemYellowColor];
     sunIcon.alpha = themeSwitch.isOn ? 0.3 : 1.0; // Dim when in dark mode
@@ -112,8 +112,8 @@
     [headerView addSubview:sunIcon];
 
     // Add moon icon on right side of switch (SF Symbol)
-    // Switch width is 51 * 0.65 = 33.15, so position icon at right edge with 1px padding
-    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 145 + (51 * 0.65) - 13, 9.5, 12, 12)];
+    // Position at far right: switch_x + switch_width - icon_width - 3px padding
+    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 145 + (51 * 0.65) - 15, 9.5, 12, 12)];
     moonIcon.image = [UIImage systemImageNamed:@"moon.fill"];
     moonIcon.tintColor = [UIColor systemYellowColor];
     moonIcon.alpha = themeSwitch.isOn ? 1.0 : 0.3; // Dim when in light mode
