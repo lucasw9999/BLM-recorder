@@ -118,13 +118,15 @@
     CGFloat cardWidth = screenWidth - (CARD_MARGIN * 2);
     CGFloat startY = 60; // Below header
 
-    // Card 1: Golf Settings - Very compact (70pt height)
+    // Card 1: Golf Settings
+    // Height calculation: title(20) + spacing(8) + fairway_row(28) + spacing(8) + stimp_row(28) + bottom_padding(8) = 100pt
     UIView *golfCard = [self createCardWithTitle:@"GOLF SETTINGS"
                                            frame:CGRectMake(CARD_MARGIN, startY,
-                                                           cardWidth, 70)];
+                                                           cardWidth, 100)];
     [self.view addSubview:golfCard];
 
     // Fairway - label and control on same row
+    // Starting at y=28 (title 20 + spacing 8)
     UILabel *fairwayLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, 60, 28)];
     fairwayLabel.text = @"Fairway";
     fairwayLabel.textColor = APP_COLOR_SECONDARY_TEXT;
@@ -137,14 +139,15 @@
     [self.fairwayControl addTarget:self action:@selector(fairwayControlChanged:) forControlEvents:UIControlEventValueChanged];
     [golfCard addSubview:self.fairwayControl];
 
-    // Stimp - label and field on same row (moved up to reduce height)
-    UILabel *stimpLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 60, 90, 20)];
+    // Stimp - label and field on same row
+    // Starting at y=64 (28 + 28 + spacing 8)
+    UILabel *stimpLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 64, 90, 28)];
     stimpLabel.text = @"Putting Stimp";
     stimpLabel.textColor = APP_COLOR_SECONDARY_TEXT;
     stimpLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [golfCard addSubview:stimpLabel];
 
-    self.stimpField = [[UITextField alloc] initWithFrame:CGRectMake(cardWidth - CARD_PADDING - 80, 58, 80, 24)];
+    self.stimpField = [[UITextField alloc] initWithFrame:CGRectMake(cardWidth - CARD_PADDING - 80, 64, 80, 28)];
     self.stimpField.borderStyle = UITextBorderStyleRoundedRect;
     self.stimpField.textAlignment = NSTextAlignmentCenter;
     self.stimpField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
@@ -164,14 +167,16 @@
     [stimpToolbar sizeToFit];
     self.stimpField.inputAccessoryView = stimpToolbar;
 
-    // Card 2: GSPro - Very compact (55pt height)
-    CGFloat card2Y = startY + 70 + SPACING_SMALL;
+    // Card 2: GSPro
+    // Height calculation: title(20) + spacing(8) + ip_row(28) + bottom_padding(8) = 64pt
+    CGFloat card2Y = startY + 100 + SPACING_SMALL;
     UIView *gsproCard = [self createCardWithTitle:@"GSPRO"
                                             frame:CGRectMake(CARD_MARGIN, card2Y,
-                                                            cardWidth, 55)];
+                                                            cardWidth, 64)];
     [self.view addSubview:gsproCard];
 
     // IP label, field, and status all on same row
+    // Starting at y=28 (title 20 + spacing 8)
     UILabel *ipLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, 25, 28)];
     ipLabel.text = @"IP";
     ipLabel.textColor = APP_COLOR_SECONDARY_TEXT;
@@ -199,14 +204,16 @@
     self.connectionStateLabel.textAlignment = NSTextAlignmentLeft;
     [gsproCard addSubview:self.connectionStateLabel];
 
-    // Card 3: Redis - Compact (130pt height)
-    CGFloat card3Y = card2Y + 55 + SPACING_SMALL;
+    // Card 3: Redis
+    // Height calculation: title(20) + spacing(8) + host_row(28) + spacing(8) + port_pass_row(28) + spacing(8) + button(28) + spacing(4) + status(10) + bottom_padding(4) = 146pt
+    CGFloat card3Y = card2Y + 64 + SPACING_SMALL;
     UIView *redisCard = [self createCardWithTitle:@"REDIS (OPTIONAL)"
                                             frame:CGRectMake(CARD_MARGIN, card3Y,
-                                                            cardWidth, 130)];
+                                                            cardWidth, 146)];
     [self.view addSubview:redisCard];
 
     // Host - label and field on same row
+    // Starting at y=28 (title 20 + spacing 8)
     UILabel *hostLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, 40, 28)];
     hostLabel.text = @"Host";
     hostLabel.textColor = APP_COLOR_SECONDARY_TEXT;
@@ -233,13 +240,14 @@
     [redisCard addSubview:self.redisHostField];
 
     // Port and Password on same row
-    UILabel *portLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 62, 30, 28)];
+    // Starting at y=64 (28 + 28 + spacing 8)
+    UILabel *portLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 64, 30, 28)];
     portLabel.text = @"Port";
     portLabel.textColor = APP_COLOR_SECONDARY_TEXT;
     portLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [redisCard addSubview:portLabel];
 
-    self.redisPortField = [[UITextField alloc] initWithFrame:CGRectMake(40, 62, 70, 28)];
+    self.redisPortField = [[UITextField alloc] initWithFrame:CGRectMake(40, 64, 70, 28)];
     self.redisPortField.borderStyle = UITextBorderStyleRoundedRect;
     self.redisPortField.placeholder = @"12647";
     self.redisPortField.keyboardType = UIKeyboardTypeNumberPad;
@@ -256,13 +264,13 @@
     self.redisPortField.inputAccessoryView = portToolbar;
     [redisCard addSubview:self.redisPortField];
 
-    UILabel *passLabel = [[UILabel alloc] initWithFrame:CGRectMake(120, 62, 35, 28)];
+    UILabel *passLabel = [[UILabel alloc] initWithFrame:CGRectMake(120, 64, 35, 28)];
     passLabel.text = @"Pass";
     passLabel.textColor = APP_COLOR_SECONDARY_TEXT;
     passLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [redisCard addSubview:passLabel];
 
-    self.redisPasswordField = [[UITextField alloc] initWithFrame:CGRectMake(160, 62,
+    self.redisPasswordField = [[UITextField alloc] initWithFrame:CGRectMake(160, 64,
                                                                              cardWidth - 160 - CARD_PADDING, 28)];
     self.redisPasswordField.borderStyle = UITextBorderStyleRoundedRect;
     self.redisPasswordField.placeholder = @"password";
@@ -279,9 +287,10 @@
     self.redisPasswordField.inputAccessoryView = passToolbar;
     [redisCard addSubview:self.redisPasswordField];
 
-    // Test button and status
+    // Test button
+    // Starting at y=100 (64 + 28 + spacing 8)
     self.redisTestButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    self.redisTestButton.frame = CGRectMake(CARD_PADDING, 96, cardWidth - (CARD_PADDING * 2), 28);
+    self.redisTestButton.frame = CGRectMake(CARD_PADDING, 100, cardWidth - (CARD_PADDING * 2), 28);
     [self.redisTestButton setTitle:@"Test Connection" forState:UIControlStateNormal];
     self.redisTestButton.backgroundColor = APP_COLOR_ACCENT;
     [self.redisTestButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -291,7 +300,8 @@
     [redisCard addSubview:self.redisTestButton];
 
     // Status label at bottom
-    self.redisStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 126,
+    // Starting at y=132 (100 + 28 + spacing 4)
+    self.redisStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 132,
                                                                        cardWidth - (CARD_PADDING * 2), 10)];
     self.redisStatusLabel.font = [UIFont systemFontOfSize:8];
     self.redisStatusLabel.textAlignment = NSTextAlignmentCenter;
