@@ -13,7 +13,10 @@
 #import "MainContainerViewController.h"
 #import "RedisManager.h"
 
-@interface SettingsViewController () <UIPickerViewDataSource, UIPickerViewDelegate, UITextFieldDelegate>
+@interface SettingsViewController () <UIPickerViewDataSource, UIPickerViewDelegate, UITextFieldDelegate, UIScrollViewDelegate>
+
+@property (nonatomic, strong) UIScrollView *scrollView;
+@property (nonatomic, strong) UIView *contentView;
 
 @property (nonatomic, strong) UIPickerView *stimpPicker;
 @property (nonatomic, strong) NSArray<NSNumber *> *stimpValues;
@@ -48,6 +51,23 @@
     // Add header with title and mode
     [self setupHeader];
 
+    // Create scroll view for settings content
+    CGFloat headerHeight = 55;
+    self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, headerHeight,
+                                                                       self.view.bounds.size.width,
+                                                                       self.view.bounds.size.height - headerHeight)];
+    self.scrollView.backgroundColor = APP_COLOR_BG;
+    self.scrollView.showsVerticalScrollIndicator = YES;
+    self.scrollView.delegate = self;
+    self.scrollView.alwaysBounceVertical = YES;
+    [self.view addSubview:self.scrollView];
+
+    // Create content view for all cards
+    self.contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0,
+                                                                  self.scrollView.bounds.size.width,
+                                                                  800)]; // Will adjust based on content
+    [self.scrollView addSubview:self.contentView];
+
     // Build stimpValues: values from 5 to 15.
     NSMutableArray<NSNumber *> *values = [NSMutableArray array];
     for (NSInteger i = 5; i <= 15; i++) {
@@ -79,7 +99,7 @@
 
     [self setConnectionStateFromGsProConnector:nil];
 
-    // Add swipe gestures for tab switching
+    // Add swipe gestures for tab switching (only when not scrolling)
     [self setupSwipeGestures];
 }
 
@@ -114,55 +134,50 @@
 }
 
 - (void)setupCardLayout {
-    CGFloat screenWidth = self.view.bounds.size.width;
-    CGFloat startY = 65; // Below header
+    CGFloat screenWidth = self.contentView.bounds.size.width;
+    CGFloat cardWidth = screenWidth - (CARD_MARGIN * 2);
+    CGFloat startY = SPACING_SMALL; // Start from top of content view
 
-    // Card 1: Golf Settings - Using HIG spacing constants
+    // Card 1: Golf Settings - More compact (100pt height)
     UIView *golfCard = [self createCardWithTitle:@"GOLF SETTINGS"
                                            frame:CGRectMake(CARD_MARGIN, startY,
-                                                           screenWidth - (CARD_MARGIN * 2), 140)];
-    [self.view addSubview:golfCard];
+                                                           cardWidth, 100)];
+    [self.contentView addSubview:golfCard];
 
-    // Fairway speed label - using Dynamic Type
-    UILabel *fairwayLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 35, 120, 30)];
-    fairwayLabel.text = @"Fairway Speed";
+    // Fairway speed - label and control on same visual row
+    UILabel *fairwayLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, 100, 20)];
+    fairwayLabel.text = @"Fairway";
     fairwayLabel.textColor = APP_COLOR_SECONDARY_TEXT;
-    fairwayLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
+    fairwayLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [golfCard addSubview:fairwayLabel];
 
-    // Fairway control
-    self.fairwayControl = [[UISegmentedControl alloc] initWithItems:@[@"Slow", @"Medium", @"Fast", @"Links"]];
-    self.fairwayControl.frame = CGRectMake(CARD_PADDING, 65,
-                                           screenWidth - (CARD_MARGIN * 2) - (CARD_PADDING * 2),
-                                           MIN_TOUCH_TARGET - 12); // Proper touch target
+    self.fairwayControl = [[UISegmentedControl alloc] initWithItems:@[@"Slow", @"Med", @"Fast", @"Links"]];
+    self.fairwayControl.frame = CGRectMake(CARD_PADDING, 48,
+                                           cardWidth - (CARD_PADDING * 2), 28);
     self.fairwayControl.selectedSegmentIndex = 1;
     [self.fairwayControl addTarget:self action:@selector(fairwayControlChanged:) forControlEvents:UIControlEventValueChanged];
     [golfCard addSubview:self.fairwayControl];
 
-    // Stimp label
-    UILabel *stimpLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 107, 100, 26)];
+    // Stimp - label and field on same row
+    UILabel *stimpLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 82, 100, 20)];
     stimpLabel.text = @"Putting Stimp";
     stimpLabel.textColor = APP_COLOR_SECONDARY_TEXT;
-    stimpLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
+    stimpLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [golfCard addSubview:stimpLabel];
 
-    // Stimp text field
-    CGFloat cardWidth = screenWidth - (CARD_MARGIN * 2);
-    self.stimpField = [[UITextField alloc] initWithFrame:CGRectMake(cardWidth - CARD_PADDING - 100, 107, 100, 26)];
+    self.stimpField = [[UITextField alloc] initWithFrame:CGRectMake(cardWidth - CARD_PADDING - 80, 80, 80, 24)];
     self.stimpField.borderStyle = UITextBorderStyleRoundedRect;
     self.stimpField.textAlignment = NSTextAlignmentCenter;
     self.stimpField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
     [golfCard addSubview:self.stimpField];
 
-    // Create the UIPickerView for stimp
     self.stimpPicker = [[UIPickerView alloc] init];
     self.stimpPicker.backgroundColor = APP_COLOR_SECONDARY_BG;
     self.stimpPicker.dataSource = self;
     self.stimpPicker.delegate = self;
     self.stimpField.inputView = self.stimpPicker;
 
-    // Add toolbar with Done button for stimpField
-    UIToolbar *stimpToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
+    UIToolbar *stimpToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 44)];
     stimpToolbar.barStyle = UIBarStyleDefault;
     UIBarButtonItem *flexSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(dismissKeyboard)];
@@ -170,70 +185,66 @@
     [stimpToolbar sizeToFit];
     self.stimpField.inputAccessoryView = stimpToolbar;
 
-    // Card 2: GSPro Connection - Using HIG spacing
-    CGFloat card2Y = startY + 140 + CARD_SPACING;
-    UIView *gsproCard = [self createCardWithTitle:@"GSPRO CONNECTION"
+    // Card 2: GSPro - More compact (75pt height)
+    CGFloat card2Y = startY + 100 + SPACING_SMALL;
+    UIView *gsproCard = [self createCardWithTitle:@"GSPRO"
                                             frame:CGRectMake(CARD_MARGIN, card2Y,
-                                                            screenWidth - (CARD_MARGIN * 2), 110)];
-    [self.view addSubview:gsproCard];
+                                                            cardWidth, 75)];
+    [self.contentView addSubview:gsproCard];
 
-    // IP label
-    UILabel *ipLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 35, 80, 30)];
-    ipLabel.text = @"IP Address";
+    // IP and status on same row
+    UILabel *ipLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, 25, 20)];
+    ipLabel.text = @"IP";
     ipLabel.textColor = APP_COLOR_SECONDARY_TEXT;
-    ipLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
+    ipLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [gsproCard addSubview:ipLabel];
 
-    // IP text field - proper touch target
-    self.ipField = [[UITextField alloc] initWithFrame:CGRectMake(CARD_PADDING, 65, 150, 32)];
+    self.ipField = [[UITextField alloc] initWithFrame:CGRectMake(CARD_PADDING, 48, 140, 28)];
     self.ipField.borderStyle = UITextBorderStyleRoundedRect;
     self.ipField.placeholder = @"192.168.x.x";
     self.ipField.keyboardType = UIKeyboardTypeDecimalPad;
     self.ipField.delegate = self;
-    self.ipField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
+    self.ipField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
 
-    // Add accessory toolbar for IP field
-    UIToolbar *ipToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
+    UIToolbar *ipToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 44)];
     ipToolbar.barStyle = UIBarStyleDefault;
     UIBarButtonItem *ipFlex = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    UIBarButtonItem *ipDoneButton = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(dismissKeyboard)];
-    ipToolbar.items = @[ipFlex, ipDoneButton];
+    UIBarButtonItem *ipDone = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(dismissKeyboard)];
+    ipToolbar.items = @[ipFlex, ipDone];
     [ipToolbar sizeToFit];
     self.ipField.inputAccessoryView = ipToolbar;
     [gsproCard addSubview:self.ipField];
 
-    // Connection state label - Dynamic Type
-    self.connectionStateLabel = [[UILabel alloc] initWithFrame:CGRectMake(175, 65, 180, 32)];
-    self.connectionStateLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
+    self.connectionStateLabel = [[UILabel alloc] initWithFrame:CGRectMake(156, 50, cardWidth - 156 - CARD_PADDING, 24)];
+    self.connectionStateLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption2];
     self.connectionStateLabel.textAlignment = NSTextAlignmentLeft;
     [gsproCard addSubview:self.connectionStateLabel];
 
-    // Card 3: Redis Settings - Using HIG spacing
-    CGFloat card3Y = card2Y + 110 + CARD_SPACING;
-    UIView *redisCard = [self createCardWithTitle:@"REDIS DATA STORAGE (OPTIONAL)"
+    // Card 3: Redis - More compact (150pt height)
+    CGFloat card3Y = card2Y + 75 + SPACING_SMALL;
+    UIView *redisCard = [self createCardWithTitle:@"REDIS (OPTIONAL)"
                                             frame:CGRectMake(CARD_MARGIN, card3Y,
-                                                            screenWidth - (CARD_MARGIN * 2), 200)];
-    [self.view addSubview:redisCard];
+                                                            cardWidth, 150)];
+    [self.contentView addSubview:redisCard];
 
-    // Redis host label
-    UILabel *redisHostLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 35, 80, 30)];
-    redisHostLabel.text = @"Redis Host";
-    redisHostLabel.textColor = APP_COLOR_SECONDARY_TEXT;
-    redisHostLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
-    [redisCard addSubview:redisHostLabel];
+    // Host field - full width
+    UILabel *hostLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, 40, 20)];
+    hostLabel.text = @"Host";
+    hostLabel.textColor = APP_COLOR_SECONDARY_TEXT;
+    hostLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
+    [redisCard addSubview:hostLabel];
 
-    // Redis host text field
-    self.redisHostField = [[UITextField alloc] initWithFrame:CGRectMake(CARD_PADDING, 65,
-                                                                         cardWidth - (CARD_PADDING * 2), 32)];
+    self.redisHostField = [[UITextField alloc] initWithFrame:CGRectMake(CARD_PADDING, 48,
+                                                                         cardWidth - (CARD_PADDING * 2), 28)];
     self.redisHostField.borderStyle = UITextBorderStyleRoundedRect;
     self.redisHostField.placeholder = @"redis-xxxxx.xxx.cloud.redislabs.com";
     self.redisHostField.keyboardType = UIKeyboardTypeURL;
     self.redisHostField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     self.redisHostField.autocorrectionType = UITextAutocorrectionTypeNo;
     self.redisHostField.delegate = self;
-    self.redisHostField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+    self.redisHostField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption2];
 
-    UIToolbar *hostToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
+    UIToolbar *hostToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 44)];
     hostToolbar.barStyle = UIBarStyleDefault;
     UIBarButtonItem *hostFlex = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     UIBarButtonItem *hostDone = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(dismissKeyboard)];
@@ -242,23 +253,22 @@
     self.redisHostField.inputAccessoryView = hostToolbar;
     [redisCard addSubview:self.redisHostField];
 
-    // Redis port label
-    UILabel *redisPortLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 105, 80, 30)];
-    redisPortLabel.text = @"Port";
-    redisPortLabel.textColor = APP_COLOR_SECONDARY_TEXT;
-    redisPortLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
-    [redisCard addSubview:redisPortLabel];
+    // Port and Test button on same row
+    UILabel *portLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 82, 30, 20)];
+    portLabel.text = @"Port";
+    portLabel.textColor = APP_COLOR_SECONDARY_TEXT;
+    portLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
+    [redisCard addSubview:portLabel];
 
-    // Redis port text field
-    self.redisPortField = [[UITextField alloc] initWithFrame:CGRectMake(100, 105, 80, 32)];
+    self.redisPortField = [[UITextField alloc] initWithFrame:CGRectMake(45, 80, 70, 24)];
     self.redisPortField.borderStyle = UITextBorderStyleRoundedRect;
     self.redisPortField.placeholder = @"12647";
     self.redisPortField.keyboardType = UIKeyboardTypeNumberPad;
     self.redisPortField.delegate = self;
-    self.redisPortField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
+    self.redisPortField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     self.redisPortField.textAlignment = NSTextAlignmentCenter;
 
-    UIToolbar *portToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
+    UIToolbar *portToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 44)];
     portToolbar.barStyle = UIBarStyleDefault;
     UIBarButtonItem *portFlex = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     UIBarButtonItem *portDone = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(dismissKeyboard)];
@@ -267,23 +277,22 @@
     self.redisPortField.inputAccessoryView = portToolbar;
     [redisCard addSubview:self.redisPortField];
 
-    // Redis password label
-    UILabel *redisPasswordLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 143, 80, 30)];
-    redisPasswordLabel.text = @"Password";
-    redisPasswordLabel.textColor = APP_COLOR_SECONDARY_TEXT;
-    redisPasswordLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
-    [redisCard addSubview:redisPasswordLabel];
+    // Password on same row
+    UILabel *passLabel = [[UILabel alloc] initWithFrame:CGRectMake(125, 82, 35, 20)];
+    passLabel.text = @"Pass";
+    passLabel.textColor = APP_COLOR_SECONDARY_TEXT;
+    passLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
+    [redisCard addSubview:passLabel];
 
-    // Redis password text field
-    self.redisPasswordField = [[UITextField alloc] initWithFrame:CGRectMake(100, 143,
-                                                                             cardWidth - CARD_PADDING - 100, 32)];
+    self.redisPasswordField = [[UITextField alloc] initWithFrame:CGRectMake(165, 80,
+                                                                             cardWidth - 165 - CARD_PADDING, 24)];
     self.redisPasswordField.borderStyle = UITextBorderStyleRoundedRect;
-    self.redisPasswordField.placeholder = @"Enter password";
+    self.redisPasswordField.placeholder = @"password";
     self.redisPasswordField.secureTextEntry = YES;
     self.redisPasswordField.delegate = self;
-    self.redisPasswordField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
+    self.redisPasswordField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
 
-    UIToolbar *passToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
+    UIToolbar *passToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 44)];
     passToolbar.barStyle = UIBarStyleDefault;
     UIBarButtonItem *passFlex = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     UIBarButtonItem *passDone = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(dismissKeyboard)];
@@ -292,9 +301,9 @@
     self.redisPasswordField.inputAccessoryView = passToolbar;
     [redisCard addSubview:self.redisPasswordField];
 
-    // Test connection button - iOS standard button style with proper touch target
+    // Test button - full width
     self.redisTestButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    self.redisTestButton.frame = CGRectMake(190, 105, 150, MIN_TOUCH_TARGET - 12);
+    self.redisTestButton.frame = CGRectMake(CARD_PADDING, 110, cardWidth - (CARD_PADDING * 2), 32);
     [self.redisTestButton setTitle:@"Test Connection" forState:UIControlStateNormal];
     self.redisTestButton.backgroundColor = APP_COLOR_ACCENT;
     [self.redisTestButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -303,14 +312,19 @@
     [self.redisTestButton addTarget:self action:@selector(testRedisConnection:) forControlEvents:UIControlEventTouchUpInside];
     [redisCard addSubview:self.redisTestButton];
 
-    // Redis status label - Dynamic Type
-    self.redisStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 180,
-                                                                       cardWidth - (CARD_PADDING * 2), 15)];
-    self.redisStatusLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
-    self.redisStatusLabel.textAlignment = NSTextAlignmentLeft;
+    // Status label - small at bottom
+    self.redisStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 145,
+                                                                       cardWidth - (CARD_PADDING * 2), 12)];
+    self.redisStatusLabel.font = [UIFont systemFontOfSize:9];
+    self.redisStatusLabel.textAlignment = NSTextAlignmentCenter;
     self.redisStatusLabel.textColor = APP_COLOR_TERTIARY_TEXT;
     self.redisStatusLabel.text = @"";
     [redisCard addSubview:self.redisStatusLabel];
+
+    // Update content size
+    CGFloat totalHeight = card3Y + 150 + SPACING_LARGE;
+    self.contentView.frame = CGRectMake(0, 0, screenWidth, totalHeight);
+    self.scrollView.contentSize = CGSizeMake(screenWidth, totalHeight);
 }
 
 - (void)setupHeader {
@@ -525,14 +539,31 @@
 }
 
 - (void)swipeUp:(UISwipeGestureRecognizer *)gesture {
-    // Switch to next tab
+    // Only switch tabs if we're at the bottom of the scroll view
+    CGFloat scrollPosition = self.scrollView.contentOffset.y;
+    CGFloat maxScroll = self.scrollView.contentSize.height - self.scrollView.bounds.size.height;
+
+    // If we can scroll down more, don't switch tabs
+    if (scrollPosition < maxScroll - 10) {
+        return;
+    }
+
+    // At bottom, switch to next tab
     if (self.parentContainer) {
         [self.parentContainer switchToNextTab];
     }
 }
 
 - (void)swipeDown:(UISwipeGestureRecognizer *)gesture {
-    // Switch to previous tab
+    // Only switch tabs if we're at the top of the scroll view
+    CGFloat scrollPosition = self.scrollView.contentOffset.y;
+
+    // If we can scroll up more, don't switch tabs
+    if (scrollPosition > 10) {
+        return;
+    }
+
+    // At top, switch to previous tab
     if (self.parentContainer) {
         [self.parentContainer switchToPreviousTab];
     }
