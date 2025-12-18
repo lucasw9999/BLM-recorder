@@ -20,7 +20,7 @@ iPhone Camera Feed (Ultra-wide)
           ↓
     ScreenReader (OCR Pipeline)
     ├── Apple Vision Framework
-    ├── CoreML Classification Models (7)
+    ├── CoreML Classification Models (6)
     └── Custom Text Processing
           ↓
     NSubmissionValidator (Consistency)
@@ -87,14 +87,13 @@ iPhone Camera Feed (Ultra-wide)
 **Purpose**: OCR pipeline management and ML model coordination
 **Components**:
 - Apple Vision Framework for text recognition
-- 7 CoreML classification models for specific field types
+- 6 CoreML classification models for specific field types
 - JSON-based annotation system for ROI definitions
 
 **Model Integration**:
 - Ball speed units: `ball-speed-units.mlpackage`
 - Carry units: `carry-units.mlpackage`
 - HLA direction: `hla-direction.mlpackage`
-- Spin axis direction: `spin-axis-direction.mlpackage`
 - AOA direction: `aoa-direction.mlpackage`
 - Path direction: `path-direction.mlpackage`
 - Club speed units: `club-speed-units.mlpackage`
@@ -129,7 +128,7 @@ iPhone Camera Feed (Ultra-wide)
 
 **Purpose**: Camera capture and frame processing coordination
 **Camera Configuration**:
-- Ultra-wide camera for better BLP screen capture
+- Ultra-wide camera for better launch monitor screen capture
 - Continuous focus and exposure
 - Session management and error handling
 
@@ -198,10 +197,12 @@ _clubDataValidator = [[NSubmissionValidator alloc] initWithRequiredCount:NUM_CON
 
 **File**: `BLM-recorder/Constants.h`
 ```c
-#define ENABLE_PERFORMANCE_LOGGING 1
+#define ENABLE_PERFORMANCE_LOGGING 0  // Disabled for production (was 1 during development)
 #define PERF_LOG_START(operation) NSLog(@"[PERF] Starting %s", #operation)
 #define PERF_LOG_END(operation) NSLog(@"[PERF] Finished %s", #operation)
 ```
+
+**Note**: Performance logging is currently disabled. Set to `1` to enable detailed timing analysis during development.
 
 **Coverage**: Complete pipeline timing from `ScreenDataProcessor.m:224-336`
 - Overall processing time

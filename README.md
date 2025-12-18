@@ -15,8 +15,8 @@ An iOS app for the Bushnell Launch Pro (BLP) golf launch monitor that provides r
 ### Requirements
 
 - macOS with Xcode
-- iPhone (tested on iPhone 15 Pro)
-- [3D printed phone mount](https://makerworld.com/en/models/1300907-bushnell-launch-pro-blm-recorder-iphone-holder#profileId-1333225) (recommended)
+- iPhone (tested and working on: iPhone 15 Pro, iPhone 16, iPhone 16 Plus, iPhone 17 Pro Max)
+- Phone mount (recommended for best OCR accuracy)
 
 ### Setup
 
@@ -55,36 +55,35 @@ An iOS app for the Bushnell Launch Pro (BLP) golf launch monitor that provides r
 
 ## Quick Start
 
-1. Mount your iPhone on the BLP
+1. Mount your iPhone on the launch monitor
 2. Launch the app
 3. Take a shot - data appears automatically
 
 ## Usage
 
-- **Data Page**: View last shot's ball and club data, start mini-games
-- **Screens Page**: See captured BLP screen images
-- **Camera Page**: Live view with detection debugging (green box = detected)
-- **Settings Page**: Adjust fairway/green speeds, configure GSPro IP
+- **Play Page**: View last shot's ball and club data, start mini-games
+- **Monitor Page**: See captured launch monitor screen images
+- **Settings Page**: Configure golf settings (fairway condition, green speed), GSPro IP, and Redis (optional)
 
 ## Documentation
 
 For detailed information, see the [`/doc`](./doc) folder:
-- **[Architecture](./doc/architecture.md)**: Technical design and ML models
-- **[Performance](./doc/performance-optimization.md)**: Optimization details and configuration
-- **[Build Issues](./doc/build-troubleshooting.md)**: Troubleshooting guide
-- **[Project History](./doc/project-history.md)**: Development timeline and decisions
+- **[Development History](./doc/development-history.md)**: Latest updates, changelog, and project timeline
+- **[Technical Reference](./doc/technical-reference.md)**: Architecture, design patterns, and visual diagrams
+- **[Performance](./doc/performance.md)**: Optimization details and configuration
+- **[Troubleshooting](./doc/troubleshooting.md)**: Build issues, failed attempts, and quick reference
 
 ## Known Limitations
 
-- iPhone 15 Pro only (not tested on other models)
-- Requires default BLP settings: MPH, yards, spin axis/rate
+- Compatible with most newer iPhones (tested on iPhone 15 Pro, 16, 16 Plus, 17 Pro Max)
+- Requires default launch monitor display settings (MPH for speed, yards for distance)
 - May not work in bright outdoor sunlight
-- 3D printed mount strongly recommended for best OCR accuracy
+- Phone mount recommended for stable positioning and best OCR accuracy
 
 ## Technical Details
 
 - **Language**: Objective-C with OpenCV
-- **Frameworks**: Vision (OCR), CoreML (7 classification + 3 physics models), AVFoundation
+- **Frameworks**: Vision (OCR), CoreML (6 classification + 3 physics models), AVFoundation
 - **Processing**: 10 FPS optimized OCR rate
 - **Performance**: 60-70% CPU reduction vs original implementation
 
