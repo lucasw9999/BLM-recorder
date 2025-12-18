@@ -23,10 +23,9 @@
 
     // Define the view controller classes in tab order
     self.viewControllerClasses = @[
-        [LaunchMonitorDataViewController class],
-        [ImagesViewController class],
-        [DebugViewController class],
-        [SettingsViewController class]
+        [LaunchMonitorDataViewController class],  // 1st: Play
+        [ImagesViewController class],              // 2nd: Monitor
+        [SettingsViewController class]             // 3rd: Settings
     ];
 
     [self setupContentContainer];
