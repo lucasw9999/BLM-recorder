@@ -900,7 +900,7 @@ Security-related changes
 ## Project Overview
 
 **Project Name**: BLM-recorder
-**Purpose**: Optimized iOS app for Bushnell Launch Pro (BLP) golf launch monitor data capture and processing
+**Purpose**: Optimized iOS app for Bushnell Launch Pro golf launch monitor data capture and processing
 **Primary Achievement**: 60-70% performance improvement while maintaining functionality and accuracy
 
 ## Timeline Summary
@@ -921,7 +921,7 @@ Security-related changes
 **Key Question**: "Why multiple ML models instead of one OCR model?"
 
 **Findings**:
-- **7 Classification Models**: Specialized for different BLP screen elements
+- **6 Classification Models**: Specialized for different launch monitor screen elements
   - Ball speed units, carry units, direction indicators
   - Each model ~95%+ accuracy for specific field types
 - **3 Physics Models**: Trajectory prediction for enhanced shot data
@@ -1020,7 +1020,7 @@ _clubDataValidator = [[NSubmissionValidator alloc] initWithRequiredCount:NUM_CON
 
 **User Engineering Analysis**:
 - **Critical Question**: "If there always some changes above the threshold then we basically run for every frame, then this logic make no sense here?"
-- **User Insight**: BLP screens constantly refresh, even with identical data
+- **User Insight**: Launch monitor screens constantly refresh, even with identical data
 - **Analysis Result**: Added OpenCV overhead with no processing reduction
 - **User Decision**: "remove it"
 

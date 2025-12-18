@@ -147,7 +147,7 @@ Based on validation fuzzy matching (0.1 tolerance):
 **User Feedback**: "If there always some changes above the threshold then we basically run for every frame, then this logic make no sense here?"
 
 **Engineering Analysis**:
-1. **Always-Changing Content**: BLP screens constantly update (even with same data)
+1. **Always-Changing Content**: Launch monitor screens constantly update (even with same data)
 2. **Added Overhead**: OpenCV comparison operations add CPU cost
 3. **No Skip Benefit**: Threshold always exceeded, no frames actually skipped
 4. **Net Performance Loss**: Added computation with no processing reduction

@@ -1,6 +1,6 @@
 # BLM-recorder
 
-An iOS app for the Bushnell Launch Pro (BLP) golf launch monitor that provides real-time OCR processing, unified data display, mini-games, and GSPro integration.
+An iOS app for the Bushnell Launch Pro golf launch monitor that provides real-time OCR processing, unified data display, mini-games, and GSPro integration.
 
 ## Features
 
