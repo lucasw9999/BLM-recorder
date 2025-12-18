@@ -362,14 +362,14 @@ Missing camera permission in Info.plist
 ```xml
 <!-- Check Info.plist for camera permissions -->
 <key>NSCameraUsageDescription</key>
-<string>This app needs camera access to read BLP launch monitor data</string>
+<string>This app needs camera access to read launch monitor data</string>
 ```
 
 **Solution** (if missing):
 Add to Info.plist:
 ```xml
 <key>NSCameraUsageDescription</key>
-<string>Camera access is required to capture and process BLP launch monitor screen data for shot analysis.</string>
+<string>Camera access is required to capture and process launch monitor screen data for shot analysis.</string>
 ```
 
 ## Performance Monitoring Issues
@@ -677,7 +677,7 @@ This document captures all failed attempts, rejected optimizations, and key less
 #### User's Logic Chain
 ```
 User Analysis:
-1. BLP screens constantly update (even with same shot data)
+1. Launch monitor screens constantly update (even with same shot data)
 2. Threshold will always be exceeded (> 5% change)
 3. OCR will run on every frame anyway
 4. Added OpenCV operations = pure overhead
@@ -691,12 +691,12 @@ User Analysis:
 
 **1. Assumption Flaw**: Static screen content
 ```
-Assumption: BLP displays static data for periods
-Reality: BLP screens constantly refresh/redraw
+Assumption: Launch monitor displays static data for periods
+Reality: Launch monitor screens constantly refresh/redraw
 Result: Always triggers change detection threshold
 ```
 
-**2. BLP Display Behavior**
+**2. Launch Monitor Display Behavior**
 ```
 Expected: Shot data → stable display → no changes → skip processing
 Actual: Shot data → constant refresh → always changing → always process
@@ -798,7 +798,7 @@ grep -r "lastProcessedFrame" BLM-recorder/
 
 **Example**:
 - Assumption: "Screen content remains static"
-- Reality: "BLP screens constantly refresh"
+- Reality: "Launch monitor screens constantly refresh"
 - Result: Optimization premise invalid
 
 ### 2. User Engineering Perspective

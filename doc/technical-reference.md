@@ -2,7 +2,7 @@
 
 ## Overview
 
-BLM-recorder is an iOS application designed to capture and process data from Bushnell Launch Pro (BLP) golf launch monitors using computer vision and machine learning. The app processes live camera feeds, detects BLP screens, performs OCR on shot data, validates results through consistency checking, and provides additional trajectory calculations.
+BLM-recorder is an iOS application designed to capture and process data from Bushnell Launch Pro golf launch monitors using computer vision and machine learning. The app processes live camera feeds, detects launch monitor screens, performs OCR on shot data, validates results through consistency checking, and provides additional trajectory calculations.
 
 ## Architecture Diagram
 
@@ -70,7 +70,7 @@ iPhone Camera Feed (Ultra-wide)
 **Language**: Objective-C++ (for OpenCV integration)
 
 **Key Capabilities**:
-- **Screen Detection**: Finds BLP screen corners using contour detection
+- **Screen Detection**: Finds launch monitor screen corners using contour detection
 - **Perspective Correction**: Warps detected screens to fixed 900x450 resolution
 - **Image Preprocessing**: Normalizes images for optimal OCR
 - **OCR Helper Methods**: Region-of-interest processing with suffix hacks
@@ -334,7 +334,7 @@ Low Level (OpenCV/Vision) → Middle Level (Processors) → High Level (UI)
 - **Image buffers**: Processed and released immediately
 - **Validation state**: Minimal memory footprint
 
-This architecture provides a robust foundation for real-time BLP data processing with significant performance optimizations while maintaining accuracy and extensibility.# Visual Reference Guide
+This architecture provides a robust foundation for real-time launch monitor data processing with significant performance optimizations while maintaining accuracy and extensibility.# Visual Reference Guide
 
 Quick visual reference for key changes made in December 2025 update.
 
