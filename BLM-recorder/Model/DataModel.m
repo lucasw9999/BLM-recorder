@@ -35,7 +35,6 @@ static DataModel *_sharedInstance = nil;
 }
 
 - (instancetype)init {
-    NSLog(@"[STARTUP] DataModel init starting");
     self = [super init];
     if (self) {
         // Listen for new frames
@@ -89,8 +88,6 @@ static DataModel *_sharedInstance = nil;
 
         // Load CV models asynchronously to prevent blocking UI startup
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-            NSDate *startTime = [NSDate date];
-            NSLog(@"[MODEL LOADING] Starting to load CoreML models...");
             NSError *error = nil;
 
             if (![[ModelManager shared] loadModelWithName:@"hla-direction" error:&error]) {
@@ -115,20 +112,15 @@ static DataModel *_sharedInstance = nil;
                 NSLog(@"Failed to load model aoa-direction: %@", error.localizedDescription);
             }
 
-            NSTimeInterval loadTime = [[NSDate date] timeIntervalSinceDate:startTime];
-            NSLog(@"[MODEL LOADING] Finished loading all CoreML models in %.2f seconds", loadTime);
-
             // Notify on main thread that models are loaded
             dispatch_async(dispatch_get_main_queue(), ^{
                 self.modelsLoaded = YES;
-                NSLog(@"[MODEL LOADING] Posting ModelsLoadedNotification");
                 [[NSNotificationCenter defaultCenter] postNotificationName:ModelsLoadedNotification
                                                                     object:nil
                                                                   userInfo:nil];
             });
         });
     }
-    NSLog(@"[STARTUP] DataModel init completed (models loading in background)");
     return self;
 }
 
@@ -152,9 +144,7 @@ static DataModel *_sharedInstance = nil;
 
     NSError *error = nil;
     [self.screenDataProcessor processScreenDataFromImage:frame error:&error];
-    if (error) {
-        NSLog(@"Error processing screen data: %@", error.localizedDescription);
-    }
+    // Screen corner detection failures are normal when monitor not visible - don't log
 }
 
 - (void)updateCorners:(NSNotification *)notification {
@@ -178,8 +168,8 @@ static DataModel *_sharedInstance = nil;
     // Don't clear club data - let it persist until new club data arrives
     self.shotNumber++;
 
-    NSLog(@"Got new BALL data (shot #%d): %@", self.shotNumber, data);
-    
+    NSLog(@"Got new BALL data (shot #%d)", self.shotNumber);
+
     [self.shotManager addShot:self.currentShotBallData];
     
     [[GSProConnector shared] sendShotWithBallData:self.currentShotBallData
@@ -206,9 +196,9 @@ static DataModel *_sharedInstance = nil;
     
     self.currentShotClubData = [data copy];
     [self.shotManager updateShotClubData:self.currentShotClubData];
-    
-    NSLog(@"Got new CLUB data (shot #%d): %@", self.shotNumber, data);
-    
+
+    NSLog(@"Got new CLUB data (shot #%d)", self.shotNumber);
+
     [[GSProConnector shared]  sendShotWithBallData:nil
                                           clubData:self.currentShotClubData
                                         shotNumber:(int)self.shotNumber];

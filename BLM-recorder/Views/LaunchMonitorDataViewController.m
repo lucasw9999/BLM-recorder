@@ -26,6 +26,11 @@ NSString *formattedStringFromInteger(NSInteger value) {
 
 @property (nonatomic, strong) UIView *loadingView;
 
+// Card views for Auto Layout
+@property (nonatomic, strong) UIView *distanceCard;
+@property (nonatomic, strong) UIView *launchCard;
+@property (nonatomic, strong) UIView *clubCard;
+
 @end
 
 @implementation LaunchMonitorDataViewController
@@ -71,8 +76,9 @@ NSString *formattedStringFromInteger(NSInteger value) {
     return [self attributedStringWithValue:value unit:unit fontSize:fontSize italicized:NO];
 }
 
-- (UIView *)createCardWithTitle:(NSString *)title frame:(CGRect)frame {
-    UIView *cardView = [[UIView alloc] initWithFrame:frame];
+- (UIView *)createCardWithTitle:(NSString *)title {
+    UIView *cardView = [[UIView alloc] init];
+    cardView.translatesAutoresizingMaskIntoConstraints = NO;
 
     // Use iOS semantic colors for automatic dark mode support
     cardView.backgroundColor = APP_COLOR_SECONDARY_BG;
@@ -86,252 +92,257 @@ NSString *formattedStringFromInteger(NSInteger value) {
 
     // Add card title label with Dynamic Type support
     if (title) {
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING,
-                                                                          SPACING_SMALL,
-                                                                          frame.size.width - (CARD_PADDING * 2),
-                                                                          20)];
+        UILabel *titleLabel = [[UILabel alloc] init];
+        titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
         titleLabel.text = title;
         titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote]; // Dynamic Type
         titleLabel.textColor = APP_COLOR_SECONDARY_TEXT;
         titleLabel.adjustsFontSizeToFitWidth = YES;
         titleLabel.minimumScaleFactor = 0.8;
         [cardView addSubview:titleLabel];
+
+        [NSLayoutConstraint activateConstraints:@[
+            [titleLabel.topAnchor constraintEqualToAnchor:cardView.topAnchor constant:SPACING_SMALL],
+            [titleLabel.leadingAnchor constraintEqualToAnchor:cardView.leadingAnchor constant:CARD_PADDING],
+            [titleLabel.trailingAnchor constraintEqualToAnchor:cardView.trailingAnchor constant:-CARD_PADDING],
+            [titleLabel.heightAnchor constraintEqualToConstant:20]
+        ]];
     }
 
     return cardView;
 }
 
-- (void) addValueLabel:(NSString *) header
-                     x:(int) x
-                     y:(int) y
-                 width:(int) width
-                  view:(UIView *)view
-{
-    const int fontSize = 34;  // Increased from 32 (+2)
-    const int headerSize = 15;  // Increased from 13 (+2)
-    UILabel *fieldLabel = [[UILabel alloc] initWithFrame:CGRectMake(x, y, width, headerSize)];
+- (UIView *)createValueLabelGroup:(NSString *)header {
+    // Container view for header + value
+    UIView *container = [[UIView alloc] init];
+    container.translatesAutoresizingMaskIntoConstraints = NO;
+
+    // Header label with Dynamic Type
+    UILabel *fieldLabel = [[UILabel alloc] init];
+    fieldLabel.translatesAutoresizingMaskIntoConstraints = NO;
     fieldLabel.text = header;
-    fieldLabel.font = [UIFont systemFontOfSize:headerSize];
-    fieldLabel.textColor = APP_COLOR_ACCENT; // Blue headers like in mockup
-    fieldLabel.adjustsFontSizeToFitWidth = YES; // Auto-resize to fit
+    fieldLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline]; // ~15pt, scales
+    fieldLabel.textColor = APP_COLOR_ACCENT;
+    fieldLabel.adjustsFontForContentSizeCategory = YES; // Enable Dynamic Type scaling
+    fieldLabel.adjustsFontSizeToFitWidth = YES;
     fieldLabel.minimumScaleFactor = 0.7;
-    [view addSubview:fieldLabel];
+    [container addSubview:fieldLabel];
 
-    // Value label (bigger, just under the field label) - default to "--"
-    UILabel *valueLabel = [[UILabel alloc] initWithFrame:CGRectMake(x, y+headerSize, width, fontSize+8)];
-
-    // Set default value to just "--" (no units until data arrives)
+    // Value label with Dynamic Type (bold)
+    UILabel *valueLabel = [[UILabel alloc] init];
+    valueLabel.translatesAutoresizingMaskIntoConstraints = NO;
     valueLabel.text = @"--";
-
-    valueLabel.font = [UIFont boldSystemFontOfSize:fontSize];
-    valueLabel.textColor = APP_COLOR_TEXT;  // Adaptive: black in light mode, white in dark mode
-    valueLabel.numberOfLines = 0; // Allow multiple lines for compact display
-    valueLabel.adjustsFontSizeToFitWidth = YES; // Auto-resize to fit
+    // Create bold version of Large Title style (~34pt, scales)
+    UIFontDescriptor *descriptor = [[UIFontDescriptor preferredFontDescriptorWithTextStyle:UIFontTextStyleLargeTitle] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold];
+    valueLabel.font = [UIFont fontWithDescriptor:descriptor size:0]; // size:0 uses descriptor's size
+    valueLabel.textColor = APP_COLOR_TEXT;
+    valueLabel.adjustsFontForContentSizeCategory = YES; // Enable Dynamic Type scaling
+    valueLabel.numberOfLines = 0; // Allow multiple lines
+    valueLabel.adjustsFontSizeToFitWidth = YES;
     valueLabel.minimumScaleFactor = 0.6;
-    [view addSubview:valueLabel];
+    [container addSubview:valueLabel];
 
     self.valueLabels[header] = valueLabel;
-}
 
-- (void)setupHeader {
-    // Header container - smaller height to save space
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 20, self.view.bounds.size.width, 35)];
-    headerView.backgroundColor = APP_COLOR_BG;
-    [self.view addSubview:headerView];
+    // Layout constraints (no fixed heights - let Dynamic Type control sizing)
+    [NSLayoutConstraint activateConstraints:@[
+        [fieldLabel.topAnchor constraintEqualToAnchor:container.topAnchor],
+        [fieldLabel.leadingAnchor constraintEqualToAnchor:container.leadingAnchor],
+        [fieldLabel.trailingAnchor constraintEqualToAnchor:container.trailingAnchor],
 
-    // BLM Recorder title (left) - smaller and adjusted position
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 5, 200, 25)];
-    titleLabel.text = @"BLM Recorder";
-    titleLabel.textColor = APP_COLOR_TEXT; // Adaptive: black in light mode, white in dark mode
-    titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
-    [headerView addSubview:titleLabel];
+        [valueLabel.topAnchor constraintEqualToAnchor:fieldLabel.bottomAnchor],
+        [valueLabel.leadingAnchor constraintEqualToAnchor:container.leadingAnchor],
+        [valueLabel.trailingAnchor constraintEqualToAnchor:container.trailingAnchor],
+        [valueLabel.bottomAnchor constraintEqualToAnchor:container.bottomAnchor]
+    ]];
 
-    // Theme toggle switch (before mode pill) - aligned with mode pill height
-    UISwitch *themeSwitch = [[UISwitch alloc] init];
-    themeSwitch.transform = CGAffineTransformMakeScale(0.65, 0.65); // Scale down to match mode pill height (21pt)
-    themeSwitch.frame = CGRectMake(self.view.bounds.size.width - 140, 7, 51 * 0.65, 31 * 0.65);
-    themeSwitch.on = (self.view.window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
-    themeSwitch.tag = 997; // Tag to find later
-    [themeSwitch addTarget:self action:@selector(toggleTheme:) forControlEvents:UIControlEventValueChanged];
-    [headerView addSubview:themeSwitch];
-
-    // Add sun icon on left side of switch (SF Symbol)
-    UIImageView *sunIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 5, 9.5, 12, 12)];
-    sunIcon.image = [UIImage systemImageNamed:@"sun.max.fill"];
-    sunIcon.tintColor = [UIColor systemYellowColor];
-    sunIcon.alpha = themeSwitch.isOn ? 0.3 : 1.0; // Dim when in dark mode
-    sunIcon.tag = 999; // Tag to find later
-    [headerView addSubview:sunIcon];
-
-    // Add moon icon on right side of switch (SF Symbol)
-    // Position at far right: switch width is 33.15, icon starts at 24px from left edge
-    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 24, 9.5, 12, 12)];
-    moonIcon.image = [UIImage systemImageNamed:@"moon.fill"];
-    moonIcon.tintColor = [UIColor systemYellowColor];
-    moonIcon.alpha = themeSwitch.isOn ? 1.0 : 0.3; // Dim when in light mode
-    moonIcon.tag = 998; // Tag to find later
-    [headerView addSubview:moonIcon];
-
-    // Mode pill (right) - smaller and adjusted position
-    UIView *modePill = [[UIView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 70, 7, 50, 21)];
-    modePill.backgroundColor = APP_COLOR_ACCENT;
-    modePill.layer.cornerRadius = 10;
-    [headerView addSubview:modePill];
-
-    UILabel *modeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 50, 21)];
-    modeLabel.text = @"PLAY";
-    modeLabel.textColor = [UIColor whiteColor];
-    modeLabel.font = [UIFont systemFontOfSize:10 weight:UIFontWeightSemibold];
-    modeLabel.textAlignment = NSTextAlignmentCenter;
-    [modePill addSubview:modeLabel];
+    return container;
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
 }
 
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-
-    // Update theme switch state to match current window theme
-    UISwitch *themeSwitch = (UISwitch *)[self.view viewWithTag:997];
-    if (themeSwitch) {
-        UIWindow *window = self.view.window;
-        if (window) {
-            BOOL isDarkMode = (window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
-            [themeSwitch setOn:isDarkMode animated:NO];
-
-            // Update icon alphas
-            UIImageView *sunIcon = (UIImageView *)[self.view viewWithTag:999];
-            UIImageView *moonIcon = (UIImageView *)[self.view viewWithTag:998];
-            sunIcon.alpha = isDarkMode ? 0.3 : 1.0;
-            moonIcon.alpha = isDarkMode ? 1.0 : 0.3;
-        }
-    }
-}
-
-- (void)toggleTheme:(UISwitch *)sender {
-    UIWindow *window = self.view.window;
-    if (sender.isOn) {
-        window.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
-    } else {
-        window.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-    }
-
-    // Update sun/moon icon alpha based on switch state
-    UIImageView *sunIcon = (UIImageView *)[self.view viewWithTag:999];
-    UIImageView *moonIcon = (UIImageView *)[self.view viewWithTag:998];
-    sunIcon.alpha = sender.isOn ? 0.3 : 1.0;
-    moonIcon.alpha = sender.isOn ? 1.0 : 0.3;
-}
-
-
 - (void)viewDidLoad {
     [super viewDidLoad];
-    NSLog(@"[STARTUP] LaunchMonitorDataViewController viewDidLoad starting");
     self.view.backgroundColor = APP_COLOR_BG;
 
     self.valueLabels = [NSMutableDictionary dictionary];
 
-    // Add header with title and mode
-    [self setupHeader];
+    // Navigation bar is provided by UINavigationController (HIG-compliant)
+    // No custom header needed
 
-    // Add swipe gestures for tab switching (not model switching)
-    [self setupSwipeGestures];
+    // Create card views
+    self.distanceCard = [self createCardWithTitle:@"DISTANCE"];
+    self.distanceCard.isAccessibilityElement = YES;
+    self.distanceCard.accessibilityLabel = @"Distance data";
+    self.distanceCard.accessibilityHint = @"Shows carry, total distance, and apex height";
 
-    // Create responsive card-based layout that fits iPhone screens
-    CGFloat screenWidth = self.view.bounds.size.width;
+    self.launchCard = [self createCardWithTitle:@"LAUNCH"];
+    self.launchCard.isAccessibilityElement = YES;
+    self.launchCard.accessibilityLabel = @"Launch data";
+    self.launchCard.accessibilityHint = @"Shows vertical launch angle, horizontal launch angle, and ball speed";
 
-    CGFloat cardMargin = 15;
-    CGFloat cardSpacing = 8; // Reduced spacing to optimize layout
-    CGFloat cardWidth = (screenWidth - cardMargin * 2 - cardSpacing) / 2;
-    CGFloat cardHeight = 110; // Reduced to avoid cutting off button
+    self.clubCard = [self createCardWithTitle:@"CLUB & SPIN"];
+    self.clubCard.isAccessibilityElement = YES;
+    self.clubCard.accessibilityLabel = @"Club and spin data";
+    self.clubCard.accessibilityHint = @"Shows club speed, smash factor, club path, angle of attack, spin axis, and total spin";
 
-    // Start lower to account for smaller header
-    CGFloat startY = 65;
+    [self.view addSubview:self.distanceCard];
+    [self.view addSubview:self.launchCard];
+    [self.view addSubview:self.clubCard];
 
-    // Row 1: Distance and Launch cards (side by side)
-    UIView *distanceCard = [self createCardWithTitle:@"DISTANCE" frame:CGRectMake(cardMargin, startY, cardWidth, cardHeight)];
-    [self.view addSubview:distanceCard];
+    // Create value label groups for Distance card
+    UIView *carryGroup = [self createValueLabelGroup:@"Carry"];
+    UIView *totalGroup = [self createValueLabelGroup:@"Total"];
+    UIView *apexGroup = [self createValueLabelGroup:@"Apex"];
 
-    CGFloat itemWidth = (cardWidth - 30) / 3; // 3 items per card
-    [self addValueLabel:@"Carry" x:10 y:30 width:itemWidth view:distanceCard];
-    [self addValueLabel:@"Total" x:10 + itemWidth y:30 width:itemWidth view:distanceCard];
-    [self addValueLabel:@"Apex" x:10 + itemWidth * 2 y:30 width:itemWidth view:distanceCard];
+    UIStackView *distanceStack = [[UIStackView alloc] initWithArrangedSubviews:@[carryGroup, totalGroup, apexGroup]];
+    distanceStack.axis = UILayoutConstraintAxisHorizontal;
+    distanceStack.distribution = UIStackViewDistributionFillEqually;
+    distanceStack.spacing = 5;
+    distanceStack.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.distanceCard addSubview:distanceStack];
 
-    UIView *launchCard = [self createCardWithTitle:@"LAUNCH" frame:CGRectMake(cardMargin + cardWidth + cardSpacing, startY, cardWidth, cardHeight)];
-    [self.view addSubview:launchCard];
+    // Create value label groups for Launch card
+    UIView *vlaGroup = [self createValueLabelGroup:@"VLA"];
+    UIView *hlaGroup = [self createValueLabelGroup:@"HLA"];
+    UIView *ballGroup = [self createValueLabelGroup:@"Ball"];
 
-    CGFloat launchItemWidth = (cardWidth - 30) / 3; // 3 items per card
-    [self addValueLabel:@"VLA" x:10 y:30 width:launchItemWidth view:launchCard];
-    [self addValueLabel:@"HLA" x:10 + launchItemWidth y:30 width:launchItemWidth view:launchCard];
-    [self addValueLabel:@"Ball" x:10 + launchItemWidth * 2 y:30 width:launchItemWidth view:launchCard];
+    UIStackView *launchStack = [[UIStackView alloc] initWithArrangedSubviews:@[vlaGroup, hlaGroup, ballGroup]];
+    launchStack.axis = UILayoutConstraintAxisHorizontal;
+    launchStack.distribution = UIStackViewDistributionFillEqually;
+    launchStack.spacing = 5;
+    launchStack.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.launchCard addSubview:launchStack];
 
-    // Row 2: Club & Spin card (full width, horizontal layout)
-    CGFloat row2Y = startY + cardHeight + cardSpacing;
-    CGFloat clubCardHeight = 110; // Reduced to match other cards
-    UIView *clubCard = [self createCardWithTitle:@"CLUB & SPIN" frame:CGRectMake(cardMargin, row2Y, cardWidth * 2 + cardSpacing, clubCardHeight)];
-    [self.view addSubview:clubCard];
+    // Create value label groups for Club & Spin card
+    UIView *clubGroup = [self createValueLabelGroup:@"Club"];
+    UIView *efficiencyGroup = [self createValueLabelGroup:@"Efficiency"];
+    UIView *pathGroup = [self createValueLabelGroup:@"Path"];
+    UIView *aoaGroup = [self createValueLabelGroup:@"AOA"];
+    UIView *sideSpinGroup = [self createValueLabelGroup:@"Side Spin"];
+    UIView *backSpinGroup = [self createValueLabelGroup:@"Back Spin"];
 
-    CGFloat clubItemWidth = (clubCard.frame.size.width - 30) / 6; // 6 items across
-    [self addValueLabel:@"Club" x:10 y:25 width:clubItemWidth view:clubCard];
-    [self addValueLabel:@"Efficiency" x:10 + clubItemWidth y:25 width:clubItemWidth view:clubCard];
-    [self addValueLabel:@"Path" x:10 + clubItemWidth * 2 y:25 width:clubItemWidth view:clubCard];
-    [self addValueLabel:@"AOA" x:10 + clubItemWidth * 3 y:25 width:clubItemWidth view:clubCard];
-    [self addValueLabel:@"Spin Axis" x:10 + clubItemWidth * 4 y:25 width:clubItemWidth view:clubCard];
-    [self addValueLabel:@"Total Spin" x:10 + clubItemWidth * 5 y:25 width:clubItemWidth view:clubCard];
+    UIStackView *clubStack = [[UIStackView alloc] initWithArrangedSubviews:@[clubGroup, efficiencyGroup, pathGroup, aoaGroup, sideSpinGroup, backSpinGroup]];
+    clubStack.axis = UILayoutConstraintAxisHorizontal;
+    clubStack.distribution = UIStackViewDistributionFillEqually;
+    clubStack.spacing = 5;
+    clubStack.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.clubCard addSubview:clubStack];
 
-    // Row 3: Mini Game section - reduced spacing for better layout
-    CGFloat miniGameY = row2Y + clubCardHeight + 6; // Reduced spacing
-    CGFloat miniGameCardHeight = 100; // Increased height for better proportions
-
-    // Position button with proper spacing after mini game area
-    CGFloat buttonY = miniGameY + 8; // Small gap between cards and button
-
-    // --- Create "Start game" button ---
-    self.miniGameButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [self.miniGameButton setTitle:@"Start Game" forState:UIControlStateNormal];
-    [self.miniGameButton setTitleColor:APP_COLOR_TEXT forState:UIControlStateNormal];
-    self.miniGameButton.backgroundColor = APP_COLOR_ACCENT;
-    self.miniGameButton.layer.cornerRadius = 8.0;
-    self.miniGameButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.miniGameButton addTarget:self action:@selector(startMiniGameTapped) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:self.miniGameButton];
-
-    // --- Create Mini Game Card (compact) ---
-    self.miniGameInfoView = [self createCardWithTitle:@"MINI GAME" frame:CGRectMake(cardMargin, miniGameY, cardWidth * 2 + cardSpacing, miniGameCardHeight)];
+    // Create Mini Game Info View
+    self.miniGameInfoView = [self createCardWithTitle:@"MINI GAME"];
     [self.view addSubview:self.miniGameInfoView];
 
-    // Mini-game data layout within the compact card
-    CGFloat miniGameItemWidth = (self.miniGameInfoView.frame.size.width - 20) / 4;
-    [self addValueLabel:@"Target" x:5 y:25 width:miniGameItemWidth - 5 view:self.miniGameInfoView];
-    [self addValueLabel:@"Last Score" x:5 + miniGameItemWidth y:25 width:miniGameItemWidth - 5 view:self.miniGameInfoView];
-    [self addValueLabel:@"Shots Left" x:5 + miniGameItemWidth * 2 y:25 width:miniGameItemWidth - 5 view:self.miniGameInfoView];
-    [self addValueLabel:@"Total Score" x:5 + miniGameItemWidth * 3 y:25 width:miniGameItemWidth - 5 view:self.miniGameInfoView];
+    // Create value label groups for Mini Game
+    UIView *targetGroup = [self createValueLabelGroup:@"Target"];
+    UIView *lastScoreGroup = [self createValueLabelGroup:@"Last Score"];
+    UIView *shotsLeftGroup = [self createValueLabelGroup:@"Shots Left"];
+    UIView *totalScoreGroup = [self createValueLabelGroup:@"Total Score"];
 
-    // Create the "End game" button within the card (smaller)
+    UIStackView *miniGameStack = [[UIStackView alloc] initWithArrangedSubviews:@[targetGroup, lastScoreGroup, shotsLeftGroup, totalScoreGroup]];
+    miniGameStack.axis = UILayoutConstraintAxisHorizontal;
+    miniGameStack.distribution = UIStackViewDistributionFillEqually;
+    miniGameStack.spacing = 5;
+    miniGameStack.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.miniGameInfoView addSubview:miniGameStack];
+
+    // Create "End game" button within the mini game card
     UIButton *endGameButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    endGameButton.frame = CGRectMake(self.miniGameInfoView.frame.size.width - 70, 5, 60, 20);
+    endGameButton.translatesAutoresizingMaskIntoConstraints = NO;
     [endGameButton setTitle:@"End" forState:UIControlStateNormal];
     [endGameButton setTitleColor:APP_COLOR_TEXT forState:UIControlStateNormal];
     endGameButton.backgroundColor = APP_COLOR_ACCENT;
     endGameButton.layer.cornerRadius = 4.0;
-    endGameButton.titleLabel.font = [UIFont systemFontOfSize:10];
+    endGameButton.titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption2]; // ~11pt, scales
+    endGameButton.titleLabel.adjustsFontForContentSizeCategory = YES;
+    endGameButton.accessibilityLabel = @"End game";
+    endGameButton.accessibilityHint = @"Ends the current mini game early";
     [endGameButton addTarget:self action:@selector(endMiniGameTapped) forControlEvents:UIControlEventTouchUpInside];
     [self.miniGameInfoView addSubview:endGameButton];
 
-    // --- Set the initial visibility ---
-    // For example, if no mini game exists, show the start button; otherwise show the info row.
-    BOOL miniGameExists = NO; // <-- Replace with your own logic
+    // Create "Start game" button
+    self.miniGameButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    self.miniGameButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.miniGameButton setTitle:@"Start Game" forState:UIControlStateNormal];
+    [self.miniGameButton setTitleColor:APP_COLOR_TEXT forState:UIControlStateNormal];
+    self.miniGameButton.backgroundColor = APP_COLOR_ACCENT;
+    self.miniGameButton.layer.cornerRadius = 8.0;
+    self.miniGameButton.accessibilityLabel = @"Start mini game";
+    self.miniGameButton.accessibilityHint = @"Opens settings to configure and start a new mini game";
+    [self.miniGameButton addTarget:self action:@selector(startMiniGameTapped) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:self.miniGameButton];
 
-    // Set layout constraints for the start button
+    // Auto Layout constraints
+    UILayoutGuide *safeArea = self.view.safeAreaLayoutGuide;
+    CGFloat cardMargin = 15;
+    CGFloat cardSpacing = 8;
+
     [NSLayoutConstraint activateConstraints:@[
+        // Row 1: Distance and Launch cards (side by side, equal heights)
+        [self.distanceCard.topAnchor constraintEqualToAnchor:safeArea.topAnchor constant:10],
+        [self.distanceCard.leadingAnchor constraintEqualToAnchor:safeArea.leadingAnchor constant:cardMargin],
+
+        [self.launchCard.topAnchor constraintEqualToAnchor:self.distanceCard.topAnchor],
+        [self.launchCard.leadingAnchor constraintEqualToAnchor:self.distanceCard.trailingAnchor constant:cardSpacing],
+        [self.launchCard.trailingAnchor constraintEqualToAnchor:safeArea.trailingAnchor constant:-cardMargin],
+        [self.launchCard.widthAnchor constraintEqualToAnchor:self.distanceCard.widthAnchor],
+        [self.launchCard.heightAnchor constraintEqualToAnchor:self.distanceCard.heightAnchor],
+
+        // Row 2: Club & Spin card (full width, equal height to distance/launch cards)
+        [self.clubCard.topAnchor constraintEqualToAnchor:self.distanceCard.bottomAnchor constant:cardSpacing],
+        [self.clubCard.leadingAnchor constraintEqualToAnchor:safeArea.leadingAnchor constant:cardMargin],
+        [self.clubCard.trailingAnchor constraintEqualToAnchor:safeArea.trailingAnchor constant:-cardMargin],
+        [self.clubCard.heightAnchor constraintEqualToAnchor:self.distanceCard.heightAnchor],
+
+        // Start Game button - pin to bottom to force cards to expand
+        [self.miniGameButton.topAnchor constraintEqualToAnchor:self.clubCard.bottomAnchor constant:16],
         [self.miniGameButton.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-        [self.miniGameButton.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:buttonY],
         [self.miniGameButton.widthAnchor constraintEqualToConstant:120],
-        [self.miniGameButton.heightAnchor constraintEqualToConstant:40]
+        [self.miniGameButton.heightAnchor constraintEqualToConstant:40],
+        [self.miniGameButton.bottomAnchor constraintEqualToAnchor:safeArea.bottomAnchor constant:-16],
+
+        // Mini Game Info View (initially hidden)
+        [self.miniGameInfoView.topAnchor constraintEqualToAnchor:self.clubCard.bottomAnchor constant:8],
+        [self.miniGameInfoView.leadingAnchor constraintEqualToAnchor:safeArea.leadingAnchor constant:cardMargin],
+        [self.miniGameInfoView.trailingAnchor constraintEqualToAnchor:safeArea.trailingAnchor constant:-cardMargin],
+        [self.miniGameInfoView.heightAnchor constraintEqualToConstant:120],
+        [self.miniGameInfoView.bottomAnchor constraintEqualToAnchor:safeArea.bottomAnchor constant:-8],
+
+        // Distance card stack
+        [distanceStack.leadingAnchor constraintEqualToAnchor:self.distanceCard.leadingAnchor constant:10],
+        [distanceStack.trailingAnchor constraintEqualToAnchor:self.distanceCard.trailingAnchor constant:-10],
+        [distanceStack.topAnchor constraintEqualToAnchor:self.distanceCard.topAnchor constant:30],
+        [distanceStack.bottomAnchor constraintEqualToAnchor:self.distanceCard.bottomAnchor constant:-10],
+
+        // Launch card stack
+        [launchStack.leadingAnchor constraintEqualToAnchor:self.launchCard.leadingAnchor constant:10],
+        [launchStack.trailingAnchor constraintEqualToAnchor:self.launchCard.trailingAnchor constant:-10],
+        [launchStack.topAnchor constraintEqualToAnchor:self.launchCard.topAnchor constant:30],
+        [launchStack.bottomAnchor constraintEqualToAnchor:self.launchCard.bottomAnchor constant:-10],
+
+        // Club card stack
+        [clubStack.leadingAnchor constraintEqualToAnchor:self.clubCard.leadingAnchor constant:10],
+        [clubStack.trailingAnchor constraintEqualToAnchor:self.clubCard.trailingAnchor constant:-10],
+        [clubStack.topAnchor constraintEqualToAnchor:self.clubCard.topAnchor constant:25],
+        [clubStack.bottomAnchor constraintEqualToAnchor:self.clubCard.bottomAnchor constant:-10],
+
+        // Mini game stack
+        [miniGameStack.leadingAnchor constraintEqualToAnchor:self.miniGameInfoView.leadingAnchor constant:5],
+        [miniGameStack.trailingAnchor constraintEqualToAnchor:self.miniGameInfoView.trailingAnchor constant:-5],
+        [miniGameStack.topAnchor constraintEqualToAnchor:self.miniGameInfoView.topAnchor constant:25],
+        [miniGameStack.bottomAnchor constraintEqualToAnchor:self.miniGameInfoView.bottomAnchor constant:-10],
+
+        // End game button
+        [endGameButton.trailingAnchor constraintEqualToAnchor:self.miniGameInfoView.trailingAnchor constant:-10],
+        [endGameButton.topAnchor constraintEqualToAnchor:self.miniGameInfoView.topAnchor constant:5],
+        [endGameButton.widthAnchor constraintEqualToConstant:60],
+        [endGameButton.heightAnchor constraintEqualToConstant:20]
     ]];
 
+    // Set initial visibility
+    BOOL miniGameExists = NO;
     self.miniGameButton.hidden = miniGameExists;
     self.miniGameInfoView.hidden = !miniGameExists;
 
@@ -375,9 +386,8 @@ NSString *formattedStringFromInteger(NSInteger value) {
         }
     } else {
         // DataModel not initialized yet - will get data via notifications when it's ready
-        NSLog(@"[STARTUP] DataModel not yet initialized, waiting for notifications");
     }
-    
+
     // DEBUG ONLY
     /*
     self.valueLabels[@"VLA"].attributedText = [self attributedStringWithValue:@"30.2°" unit:@"" fontSize:48];
@@ -401,8 +411,6 @@ NSString *formattedStringFromInteger(NSInteger value) {
     [self showMiniGamePanel:YES];
      */
     // DEBUG ONLY
-
-    NSLog(@"[STARTUP] LaunchMonitorDataViewController viewDidLoad completed");
 }
 
 - (NSString*) getLeftRightArrowFromValue:(float) value {
@@ -482,34 +490,22 @@ NSString *formattedStringFromInteger(NSInteger value) {
     // Path with direction (like "<0.51°")
     // Note: Path data comes from club data, so we'll set this in setClubData
 
-    // Spin Axis - direction symbol same as units, numbers big, units small
-    float spinAxis = [data[@"SpinAxis"] floatValue];
-    NSString *sideSpinDirection = spinAxis < 0 ? @"<" : @">";
-    NSString *sideSpinValue = [NSString stringWithFormat:@"%.2f", fabs(spinAxis)];
-    NSString *sideSpinFull = [NSString stringWithFormat:@"%@%@°", sideSpinDirection, sideSpinValue];
+    // Side Spin - value from launch monitor (e.g., 58 or -58 for L)
+    float sideSpin = [data[@"SideSpin"] floatValue];
+    NSString *sideSpinDirection = sideSpin < 0 ? @"L" : @"R";
+    NSString *sideSpinString = [NSString stringWithFormat:@"%.0f", fabs(sideSpin)];
+    self.valueLabels[@"Side Spin"].attributedText = [self attributedStringWithValue:sideSpinString unit:[NSString stringWithFormat:@"%@ rpm", sideSpinDirection] fontSize:34];
 
-    NSMutableAttributedString *sideSpinAttr = [[NSMutableAttributedString alloc] initWithString:sideSpinFull];
-    // Direction symbol: same as units
-    [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18] range:NSMakeRange(0, 1)];
-    [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(0, 1)];  // Adaptive gray
-    // Number: large and bold
-    [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:34] range:NSMakeRange(1, sideSpinValue.length)];
-    [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:NSMakeRange(1, sideSpinValue.length)];  // Adaptive
-    // Unit (°): same as other units
-    [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18] range:NSMakeRange(1 + sideSpinValue.length, 1)];
-    [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(1 + sideSpinValue.length, 1)];  // Adaptive gray
-    self.valueLabels[@"Spin Axis"].attributedText = sideSpinAttr;
-
-    // Total Spin - numbers big, units small
-    float totalSpin = [data[@"TotalSpin"] floatValue];
-    NSString *totalSpinValue = [NSString stringWithFormat:@"%.0f", totalSpin];
-    self.valueLabels[@"Total Spin"].attributedText = [self attributedStringWithValue:totalSpinValue unit:@" rpm" fontSize:34];
+    // Back Spin - value from launch monitor (e.g., 560)
+    float backSpin = [data[@"BackSpin"] floatValue];
+    NSString *backSpinString = [NSString stringWithFormat:@"%.0f", backSpin];
+    self.valueLabels[@"Back Spin"].attributedText = [self attributedStringWithValue:backSpinString unit:@" rpm" fontSize:34];
 
     if([data[@"IsPutt"] boolValue] == YES) {
         self.valueLabels[@"Carry"].attributedText = [self attributedStringWithValue:@"--" unit:@" ft" fontSize:34];
         self.valueLabels[@"VLA"].text = @"--";
         self.valueLabels[@"Apex"].attributedText = [self attributedStringWithValue:@"--" unit:@" ft" fontSize:34];
-        self.valueLabels[@"Total Spin"].attributedText = [self attributedStringWithValue:@"--" unit:@" rpm" fontSize:34];
+        self.valueLabels[@"Back Spin"].attributedText = [self attributedStringWithValue:@"--" unit:@" rpm" fontSize:34];
     }
 }
 
@@ -649,83 +645,69 @@ NSString *formattedStringFromInteger(NSInteger value) {
     }
 }
 
-#pragma mark - Swipe Gestures
-
-- (void)setupSwipeGestures {
-    // Swipe up gesture (previous model)
-    UISwipeGestureRecognizer *swipeUp = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(swipeUp:)];
-    swipeUp.direction = UISwipeGestureRecognizerDirectionUp;
-    [self.view addGestureRecognizer:swipeUp];
-
-    // Swipe down gesture (next model)
-    UISwipeGestureRecognizer *swipeDown = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(swipeDown:)];
-    swipeDown.direction = UISwipeGestureRecognizerDirectionDown;
-    [self.view addGestureRecognizer:swipeDown];
-}
-
-- (void)swipeUp:(UISwipeGestureRecognizer *)gesture {
-    // Switch to next tab
-    if (self.parentContainer) {
-        [self.parentContainer switchToNextTab];
-    }
-}
-
-- (void)swipeDown:(UISwipeGestureRecognizer *)gesture {
-    // Switch to previous tab
-    if (self.parentContainer) {
-        [self.parentContainer switchToPreviousTab];
-    }
-}
-
-- (void)updateModelDisplay {
-    // No longer needed - we're switching tabs, not models
-}
-
 - (void)createLoadingView {
-    NSLog(@"Creating loading view overlay");
-
     // Create a semi-transparent overlay
-    self.loadingView = [[UIView alloc] initWithFrame:self.view.bounds];
+    self.loadingView = [[UIView alloc] init];
+    self.loadingView.translatesAutoresizingMaskIntoConstraints = NO;
     self.loadingView.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.85];
-    self.loadingView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
     // Create a container for the loading indicator and label
-    UIView *container = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 180, 180)];
-    container.center = CGPointMake(self.view.bounds.size.width / 2, self.view.bounds.size.height / 2);
+    UIView *container = [[UIView alloc] init];
+    container.translatesAutoresizingMaskIntoConstraints = NO;
     container.backgroundColor = [UIColor colorWithWhite:0.2 alpha:1.0];
     container.layer.cornerRadius = 20;
-
-    // Add subtle border to make it more visible
     container.layer.borderWidth = 1;
     container.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
 
     // Add activity indicator
     UIActivityIndicatorView *spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
-    spinner.center = CGPointMake(90, 70);
+    spinner.translatesAutoresizingMaskIntoConstraints = NO;
     spinner.color = APP_COLOR_ACCENT;
     [spinner startAnimating];
     [container addSubview:spinner];
 
     // Add loading label
-    UILabel *loadingLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 110, 160, 50)];
+    UILabel *loadingLabel = [[UILabel alloc] init];
+    loadingLabel.translatesAutoresizingMaskIntoConstraints = NO;
     loadingLabel.text = @"Loading AI models...\nThis may take a moment";
     loadingLabel.numberOfLines = 2;
     loadingLabel.textAlignment = NSTextAlignmentCenter;
     loadingLabel.textColor = [UIColor whiteColor];
-    loadingLabel.font = [UIFont systemFontOfSize:13];
+    loadingLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote]; // ~13pt, scales
+    loadingLabel.adjustsFontForContentSizeCategory = YES;
     [container addSubview:loadingLabel];
 
     [self.loadingView addSubview:container];
     [self.view addSubview:self.loadingView];
 
-    NSLog(@"Loading view added to view hierarchy");
+    // Auto Layout constraints
+    [NSLayoutConstraint activateConstraints:@[
+        // Loading view fills entire screen
+        [self.loadingView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+        [self.loadingView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [self.loadingView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.loadingView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+
+        // Container centered
+        [container.centerXAnchor constraintEqualToAnchor:self.loadingView.centerXAnchor],
+        [container.centerYAnchor constraintEqualToAnchor:self.loadingView.centerYAnchor],
+        [container.widthAnchor constraintEqualToConstant:180],
+        [container.heightAnchor constraintEqualToConstant:180],
+
+        // Spinner positioned
+        [spinner.centerXAnchor constraintEqualToAnchor:container.centerXAnchor],
+        [spinner.topAnchor constraintEqualToAnchor:container.topAnchor constant:50],
+
+        // Loading label positioned
+        [loadingLabel.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:10],
+        [loadingLabel.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-10],
+        [loadingLabel.topAnchor constraintEqualToAnchor:spinner.bottomAnchor constant:20],
+        [loadingLabel.heightAnchor constraintEqualToConstant:50]
+    ]];
 }
 
 - (void)handleModelsLoaded:(NSNotification *)notification {
-    NSLog(@"Models loaded notification received, removing loading view");
-
     if (!self.loadingView) {
-        NSLog(@"No loading view to remove");
         return;
     }
 
@@ -735,7 +717,6 @@ NSString *formattedStringFromInteger(NSInteger value) {
     } completion:^(BOOL finished) {
         [self.loadingView removeFromSuperview];
         self.loadingView = nil;
-        NSLog(@"Loading view removed successfully");
     }];
 }
 

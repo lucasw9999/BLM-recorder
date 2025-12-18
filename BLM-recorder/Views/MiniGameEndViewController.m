@@ -36,18 +36,24 @@
     UILabel *scoreLabel = [[UILabel alloc] init];
     scoreLabel.translatesAutoresizingMaskIntoConstraints = NO;
     scoreLabel.textAlignment = NSTextAlignmentCenter;
-    scoreLabel.font = [UIFont boldSystemFontOfSize:24];
+    // Create bold version of Title2 style (~22pt, scales)
+    UIFontDescriptor *descriptor = [[UIFontDescriptor preferredFontDescriptorWithTextStyle:UIFontTextStyleTitle2] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold];
+    scoreLabel.font = [UIFont fontWithDescriptor:descriptor size:0];
+    scoreLabel.adjustsFontForContentSizeCategory = YES;
     scoreLabel.text = [NSString stringWithFormat:@"Final score: %@", self.finalScoreString];
     [containerView addSubview:scoreLabel];
-    
+
     // Create the single button (for example, "OK")
     UIButton *actionButton = [UIButton buttonWithType:UIButtonTypeSystem];
     actionButton.translatesAutoresizingMaskIntoConstraints = NO;
     [actionButton setTitle:@"Finish" forState:UIControlStateNormal];
-    actionButton.titleLabel.font = [UIFont systemFontOfSize:18];
+    actionButton.titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody]; // ~17pt, scales
+    actionButton.titleLabel.adjustsFontForContentSizeCategory = YES;
     actionButton.backgroundColor = APP_COLOR_ACCENT;
     [actionButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     actionButton.layer.cornerRadius = 4.0;
+    actionButton.accessibilityLabel = @"Finish";
+    actionButton.accessibilityHint = @"Dismisses the mini game results screen";
     [actionButton addTarget:self action:@selector(finishButtonTapped) forControlEvents:UIControlEventTouchUpInside];
     [containerView addSubview:actionButton];
     

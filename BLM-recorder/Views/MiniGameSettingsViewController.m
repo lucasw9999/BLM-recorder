@@ -45,7 +45,8 @@
     //
     self.instructionsTextView = [[UITextView alloc] initWithFrame:CGRectZero];
     self.instructionsTextView.textColor = [UIColor labelColor];
-    self.instructionsTextView.font = [UIFont systemFontOfSize:16];
+    self.instructionsTextView.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody]; // ~17pt, scales
+    self.instructionsTextView.adjustsFontForContentSizeCategory = YES;
     self.instructionsTextView.editable = NO; // Read-only instructions
     
     // Placeholder instructions text

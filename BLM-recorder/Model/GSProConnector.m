@@ -60,7 +60,6 @@ NSString * const GSProConnectionStateNotification = @"GSProConnectionStateNotifi
     self.isConnected = NO;
     [self closeStreams];
     [self postConnectionNotification:@"Disconnected"];
-    NSLog(@"Disconnected from server.");
 }
 
 - (NSString *)createShotJsonWithBallData:(NSDictionary *)ballData
@@ -137,11 +136,7 @@ NSString * const GSProConnectionStateNotification = @"GSProConnectionStateNotifi
             NSLog(@"Error writing to stream: %@", self.outputStream.streamError);
             [self disconnect];
             [self scheduleReconnect];
-        } else {
-            NSLog(@"Sent %ld bytes to server.", (long)bytesWritten);
         }
-    } else {
-        NSLog(@"Output stream has no space available.");
     }
 }
 
@@ -173,8 +168,6 @@ NSString * const GSProConnectionStateNotification = @"GSProConnectionStateNotifi
     
     [self.inputStream open];
     [self.outputStream open];
-    
-    NSLog(@"Attempting to connect to %@:%ld", self.serverIP, (long)self.serverPort);
 }
 
 - (void)closeStreams {
@@ -199,26 +192,22 @@ NSString * const GSProConnectionStateNotification = @"GSProConnectionStateNotifi
     switch (eventCode) {
         case NSStreamEventOpenCompleted:
             if (aStream == self.outputStream) {
-                NSLog(@"Output stream opened.");
                 self.isConnected = YES;
                 [self invalidateReconnectTimer];
-                
                 [self postConnectionNotification:@"Connected"];
             }
             break;
-            
+
         case NSStreamEventErrorOccurred:
-            NSLog(@"Stream error: %@", aStream.streamError);
             [self disconnect];
             [self scheduleReconnect];
             break;
-            
+
         case NSStreamEventEndEncountered:
-            NSLog(@"Stream end encountered.");
             [self disconnect];
             [self scheduleReconnect];
             break;
-            
+
         default:
             break;
     }
