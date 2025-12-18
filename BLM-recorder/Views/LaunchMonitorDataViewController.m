@@ -45,10 +45,10 @@ NSString *formattedStringFromInteger(NSInteger value) {
 
     if (italicized) {
         valueFont = [UIFont italicSystemFontOfSize:fontSize];
-        unitFont = [UIFont italicSystemFontOfSize:(fontSize / 2.0)]; // Half size units (32/2.0 = 16pt)
+        unitFont = [UIFont italicSystemFontOfSize:(fontSize / 2.0)]; // Half size units (34/2.0 = 17pt)
     } else {
         valueFont = [UIFont boldSystemFontOfSize:fontSize]; // Make values bold
-        unitFont = [UIFont systemFontOfSize:(fontSize / 2.0)]; // Units half size (32/2.0 = 16pt)
+        unitFont = [UIFont systemFontOfSize:(fontSize / 2.0)]; // Units half size (34/2.0 = 17pt)
     }
 
     // Apply the chosen fonts and colors to the respective ranges
@@ -107,8 +107,8 @@ NSString *formattedStringFromInteger(NSInteger value) {
                  width:(int) width
                   view:(UIView *)view
 {
-    const int fontSize = 32;  // Consistent readable size
-    const int headerSize = 13;
+    const int fontSize = 34;  // Increased from 32 (+2)
+    const int headerSize = 15;  // Increased from 13 (+2)
     UILabel *fieldLabel = [[UILabel alloc] initWithFrame:CGRectMake(x, y, width, headerSize)];
     fieldLabel.text = header;
     fieldLabel.font = [UIFont systemFontOfSize:headerSize];
@@ -151,6 +151,7 @@ NSString *formattedStringFromInteger(NSInteger value) {
     themeSwitch.transform = CGAffineTransformMakeScale(0.65, 0.65); // Scale down to match mode pill height (21pt)
     themeSwitch.frame = CGRectMake(self.view.bounds.size.width - 140, 7, 51 * 0.65, 31 * 0.65);
     themeSwitch.on = (self.view.window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
+    themeSwitch.tag = 997; // Tag to find later
     [themeSwitch addTarget:self action:@selector(toggleTheme:) forControlEvents:UIControlEventValueChanged];
     [headerView addSubview:themeSwitch];
 
@@ -163,8 +164,8 @@ NSString *formattedStringFromInteger(NSInteger value) {
     [headerView addSubview:sunIcon];
 
     // Add moon icon on right side of switch (SF Symbol)
-    // Position at far right: switch_x + switch_width - icon_width - 3px padding
-    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + (51 * 0.65) - 15, 9.5, 12, 12)];
+    // Position at far right: switch width is 33.15, icon starts at 24px from left edge
+    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 140 + 24, 9.5, 12, 12)];
     moonIcon.image = [UIImage systemImageNamed:@"moon.fill"];
     moonIcon.tintColor = [UIColor systemYellowColor];
     moonIcon.alpha = themeSwitch.isOn ? 1.0 : 0.3; // Dim when in light mode
@@ -183,6 +184,30 @@ NSString *formattedStringFromInteger(NSInteger value) {
     modeLabel.font = [UIFont systemFontOfSize:10 weight:UIFontWeightSemibold];
     modeLabel.textAlignment = NSTextAlignmentCenter;
     [modePill addSubview:modeLabel];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+
+    // Update theme switch state to match current window theme
+    UISwitch *themeSwitch = (UISwitch *)[self.view viewWithTag:997];
+    if (themeSwitch) {
+        UIWindow *window = self.view.window;
+        if (window) {
+            BOOL isDarkMode = (window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
+            [themeSwitch setOn:isDarkMode animated:NO];
+
+            // Update icon alphas
+            UIImageView *sunIcon = (UIImageView *)[self.view viewWithTag:999];
+            UIImageView *moonIcon = (UIImageView *)[self.view viewWithTag:998];
+            sunIcon.alpha = isDarkMode ? 0.3 : 1.0;
+            moonIcon.alpha = isDarkMode ? 1.0 : 0.3;
+        }
+    }
 }
 
 - (void)toggleTheme:(UISwitch *)sender {
@@ -408,29 +433,29 @@ NSString *formattedStringFromInteger(NSInteger value) {
 
     NSMutableAttributedString *vlaAttr = [[NSMutableAttributedString alloc] initWithString:vlaFull];
     // Number: large and bold
-    [vlaAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:32] range:NSMakeRange(0, vlaValue.length)];
+    [vlaAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:34] range:NSMakeRange(0, vlaValue.length)];
     [vlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:NSMakeRange(0, vlaValue.length)];  // Adaptive
     // Unit (°): same as other units
-    [vlaAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(vlaValue.length, 1)];
+    [vlaAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18] range:NSMakeRange(vlaValue.length, 1)];
     [vlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(vlaValue.length, 1)];  // Adaptive gray
     self.valueLabels[@"VLA"].attributedText = vlaAttr;
 
     // Apex (height) - numbers big, units small
-    self.valueLabels[@"Apex"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%.0f", 3.0f * [data[@"Height"] floatValue]] unit:@" ft" fontSize:32];
+    self.valueLabels[@"Apex"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%.0f", 3.0f * [data[@"Height"] floatValue]] unit:@" ft" fontSize:34];
 
     // Carry distance with decimal (like "2.0 yd")
     float carryDistance = [data[@"CarryDistance"] floatValue];
     float carryOffline = [data[@"CarryOffline"] floatValue];
     NSString *carryValue = [NSString stringWithFormat:@"%.1f", carryDistance];
     NSString *carryUnit = [NSString stringWithFormat:@" %@ •%.0f", distanceUnits, fabs(carryOffline)];
-    self.valueLabels[@"Carry"].attributedText = [self attributedStringWithValue:carryValue unit:carryUnit fontSize:32];
+    self.valueLabels[@"Carry"].attributedText = [self attributedStringWithValue:carryValue unit:carryUnit fontSize:34];
 
     // Total distance with decimal (like "6.0 yd •4")
     float totalDistance = [data[@"TotalDistance"] floatValue];
     float totalOffline = [data[@"TotalOffline"] floatValue];
     NSString *totalValue = [NSString stringWithFormat:@"%.1f", totalDistance];
     NSString *totalUnit = [NSString stringWithFormat:@" %@ •%.0f", distanceUnits, fabs(totalOffline)];
-    self.valueLabels[@"Total"].attributedText = [self attributedStringWithValue:totalValue unit:totalUnit fontSize:32];
+    self.valueLabels[@"Total"].attributedText = [self attributedStringWithValue:totalValue unit:totalUnit fontSize:34];
 
     // HLA with direction - direction symbol same as units, numbers big, units small
     float hla = [data[@"HLA"] floatValue];
@@ -440,19 +465,19 @@ NSString *formattedStringFromInteger(NSInteger value) {
 
     NSMutableAttributedString *hlaAttr = [[NSMutableAttributedString alloc] initWithString:hlaFull];
     // Direction symbol: same as units
-    [hlaAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0, 1)];
+    [hlaAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18] range:NSMakeRange(0, 1)];
     [hlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(0, 1)];  // Adaptive gray
     // Number: large and bold
-    [hlaAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:32] range:NSMakeRange(1, hlaValue.length)];
+    [hlaAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:34] range:NSMakeRange(1, hlaValue.length)];
     [hlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:NSMakeRange(1, hlaValue.length)];  // Adaptive
     // Unit (°): same as other units
-    [hlaAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(1 + hlaValue.length, 1)];
+    [hlaAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18] range:NSMakeRange(1 + hlaValue.length, 1)];
     [hlaAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(1 + hlaValue.length, 1)];  // Adaptive gray
     self.valueLabels[@"HLA"].attributedText = hlaAttr;
 
     // Ball speed - numbers big, units small
     NSString *ballValue = [NSString stringWithFormat:@"%.1f", [data[@"Speed"] floatValue]];
-    self.valueLabels[@"Ball"].attributedText = [self attributedStringWithValue:ballValue unit:@" mph" fontSize:32];
+    self.valueLabels[@"Ball"].attributedText = [self attributedStringWithValue:ballValue unit:@" mph" fontSize:34];
 
     // Path with direction (like "<0.51°")
     // Note: Path data comes from club data, so we'll set this in setClubData
@@ -465,26 +490,26 @@ NSString *formattedStringFromInteger(NSInteger value) {
 
     NSMutableAttributedString *sideSpinAttr = [[NSMutableAttributedString alloc] initWithString:sideSpinFull];
     // Direction symbol: same as units
-    [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0, 1)];
+    [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18] range:NSMakeRange(0, 1)];
     [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(0, 1)];  // Adaptive gray
     // Number: large and bold
-    [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:32] range:NSMakeRange(1, sideSpinValue.length)];
+    [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:34] range:NSMakeRange(1, sideSpinValue.length)];
     [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:NSMakeRange(1, sideSpinValue.length)];  // Adaptive
     // Unit (°): same as other units
-    [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(1 + sideSpinValue.length, 1)];
+    [sideSpinAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18] range:NSMakeRange(1 + sideSpinValue.length, 1)];
     [sideSpinAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(1 + sideSpinValue.length, 1)];  // Adaptive gray
     self.valueLabels[@"Spin Axis"].attributedText = sideSpinAttr;
 
     // Total Spin - numbers big, units small
     float totalSpin = [data[@"TotalSpin"] floatValue];
     NSString *totalSpinValue = [NSString stringWithFormat:@"%.0f", totalSpin];
-    self.valueLabels[@"Total Spin"].attributedText = [self attributedStringWithValue:totalSpinValue unit:@" rpm" fontSize:32];
+    self.valueLabels[@"Total Spin"].attributedText = [self attributedStringWithValue:totalSpinValue unit:@" rpm" fontSize:34];
 
     if([data[@"IsPutt"] boolValue] == YES) {
-        self.valueLabels[@"Carry"].attributedText = [self attributedStringWithValue:@"--" unit:@" ft" fontSize:32];
+        self.valueLabels[@"Carry"].attributedText = [self attributedStringWithValue:@"--" unit:@" ft" fontSize:34];
         self.valueLabels[@"VLA"].text = @"--";
-        self.valueLabels[@"Apex"].attributedText = [self attributedStringWithValue:@"--" unit:@" ft" fontSize:32];
-        self.valueLabels[@"Total Spin"].attributedText = [self attributedStringWithValue:@"--" unit:@" rpm" fontSize:32];
+        self.valueLabels[@"Apex"].attributedText = [self attributedStringWithValue:@"--" unit:@" ft" fontSize:34];
+        self.valueLabels[@"Total Spin"].attributedText = [self attributedStringWithValue:@"--" unit:@" rpm" fontSize:34];
     }
 }
 
@@ -505,12 +530,12 @@ NSString *formattedStringFromInteger(NSInteger value) {
     // Club: just speed - numbers big, units small
     float clubSpeed = [data[@"Speed"] floatValue];
     NSString *clubValue = [NSString stringWithFormat:@"%.1f", clubSpeed];
-    self.valueLabels[@"Club"].attributedText = [self attributedStringWithValue:clubValue unit:@" mph" fontSize:32];
+    self.valueLabels[@"Club"].attributedText = [self attributedStringWithValue:clubValue unit:@" mph" fontSize:34];
 
     // Efficiency: just the efficiency ratio
     float efficiency = [data[@"Efficiency"] floatValue];
     NSString *efficiencyValue = [NSString stringWithFormat:@"%.2f", efficiency];
-    self.valueLabels[@"Efficiency"].attributedText = [self attributedStringWithValue:efficiencyValue unit:@"x" fontSize:32];
+    self.valueLabels[@"Efficiency"].attributedText = [self attributedStringWithValue:efficiencyValue unit:@"x" fontSize:34];
 
     // Path with direction - direction symbol same as units, numbers big, units small
     float path = [data[@"Path"] floatValue];
@@ -521,13 +546,13 @@ NSString *formattedStringFromInteger(NSInteger value) {
     if (self.valueLabels[@"Path"]) {
         NSMutableAttributedString *pathAttr = [[NSMutableAttributedString alloc] initWithString:pathFull];
         // Direction symbol: same as units
-        [pathAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(0, 1)];
+        [pathAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18] range:NSMakeRange(0, 1)];
         [pathAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(0, 1)];  // Adaptive gray
         // Number: large and bold
-        [pathAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:32] range:NSMakeRange(1, pathValue.length)];
+        [pathAttr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:34] range:NSMakeRange(1, pathValue.length)];
         [pathAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_TEXT range:NSMakeRange(1, pathValue.length)];  // Adaptive
         // Unit (°): same as other units
-        [pathAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:16] range:NSMakeRange(1 + pathValue.length, 1)];
+        [pathAttr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18] range:NSMakeRange(1 + pathValue.length, 1)];
         [pathAttr addAttribute:NSForegroundColorAttributeName value:APP_COLOR_SECONDARY_TEXT range:NSMakeRange(1 + pathValue.length, 1)];  // Adaptive gray
         self.valueLabels[@"Path"].attributedText = pathAttr;
     }
@@ -536,7 +561,7 @@ NSString *formattedStringFromInteger(NSInteger value) {
     float aoa = [data[@"AngleOfAttack"] floatValue];
     NSString *aoaArrow = aoa < 0 ? @"↓" : @"↑";
     NSString *aoaValue = [NSString stringWithFormat:@"%.2f°", fabs(aoa)];
-    self.valueLabels[@"AOA"].attributedText = [self attributedStringWithValue:aoaValue unit:aoaArrow fontSize:32];
+    self.valueLabels[@"AOA"].attributedText = [self attributedStringWithValue:aoaValue unit:aoaArrow fontSize:34];
 }
 
 - (void)handleNewClubData:(NSNotification *)notification {
@@ -591,10 +616,10 @@ NSString *formattedStringFromInteger(NSInteger value) {
     
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString* distanceUnits = [miniGameManager.gameType isEqualToString:@"Putting"] ? @"ft" : @"yd";
-        self.valueLabels[@"Target"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%ld", targetDistanceForCurrentShot] unit:distanceUnits fontSize:32];
-        self.valueLabels[@"Last Score"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%ld", mostRecentShotScore] unit:[NSString stringWithFormat:@"(%@)", formattedStringFromInteger(mostRecentShotToPar)] fontSize:32];
-        self.valueLabels[@"Shots Left"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%ld", shotsRemaining] unit:@"" fontSize:32];
-        self.valueLabels[@"Total Score"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%ld", totalScore] unit:[NSString stringWithFormat:@"(%@)", formattedStringFromInteger(totalToPar)] fontSize:32];
+        self.valueLabels[@"Target"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%ld", targetDistanceForCurrentShot] unit:distanceUnits fontSize:34];
+        self.valueLabels[@"Last Score"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%ld", mostRecentShotScore] unit:[NSString stringWithFormat:@"(%@)", formattedStringFromInteger(mostRecentShotToPar)] fontSize:34];
+        self.valueLabels[@"Shots Left"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%ld", shotsRemaining] unit:@"" fontSize:34];
+        self.valueLabels[@"Total Score"].attributedText = [self attributedStringWithValue:[NSString stringWithFormat:@"%ld", totalScore] unit:[NSString stringWithFormat:@"(%@)", formattedStringFromInteger(totalToPar)] fontSize:34];
     });
 }
 

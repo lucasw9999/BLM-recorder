@@ -100,6 +100,7 @@
     themeSwitch.transform = CGAffineTransformMakeScale(0.65, 0.65); // Scale down to match mode pill height (21pt)
     themeSwitch.frame = CGRectMake(self.view.bounds.size.width - 145, 7, 51 * 0.65, 31 * 0.65);
     themeSwitch.on = (self.view.window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
+    themeSwitch.tag = 997; // Tag to find later
     [themeSwitch addTarget:self action:@selector(toggleTheme:) forControlEvents:UIControlEventValueChanged];
     [headerView addSubview:themeSwitch];
 
@@ -112,8 +113,8 @@
     [headerView addSubview:sunIcon];
 
     // Add moon icon on right side of switch (SF Symbol)
-    // Position at far right: switch_x + switch_width - icon_width - 3px padding
-    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 145 + (51 * 0.65) - 15, 9.5, 12, 12)];
+    // Position at far right: switch width is 33.15, icon starts at 24px from left edge
+    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 145 + 24, 9.5, 12, 12)];
     moonIcon.image = [UIImage systemImageNamed:@"moon.fill"];
     moonIcon.tintColor = [UIColor systemYellowColor];
     moonIcon.alpha = themeSwitch.isOn ? 1.0 : 0.3; // Dim when in light mode
@@ -189,6 +190,26 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self updateCameraFrame:nil]; // Ensure the latest frame is displayed when switching tabs
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+
+    // Update theme switch state to match current window theme
+    UISwitch *themeSwitch = (UISwitch *)[self.view viewWithTag:997];
+    if (themeSwitch) {
+        UIWindow *window = self.view.window;
+        if (window) {
+            BOOL isDarkMode = (window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
+            [themeSwitch setOn:isDarkMode animated:NO];
+
+            // Update icon alphas
+            UIImageView *sunIcon = (UIImageView *)[self.view viewWithTag:999];
+            UIImageView *moonIcon = (UIImageView *)[self.view viewWithTag:998];
+            sunIcon.alpha = isDarkMode ? 0.3 : 1.0;
+            moonIcon.alpha = isDarkMode ? 1.0 : 0.3;
+        }
+    }
 }
 
 - (void)updateCameraFrame:(NSNotification *)notification {

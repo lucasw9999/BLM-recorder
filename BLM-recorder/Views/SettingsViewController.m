@@ -118,39 +118,47 @@
     CGFloat cardWidth = screenWidth - (CARD_MARGIN * 2);
     CGFloat startY = 60; // Below header
 
+    // Consistent layout measurements
+    CGFloat labelWidth = 55;
+    CGFloat fieldStartX = 60; // All text fields start at this x position
+
     // Card 1: Golf Settings
-    // Height calculation: title(20) + spacing(8) + fairway_row(28) + spacing(8) + stimp_row(28) + bottom_padding(8) = 100pt
+    // Height calculation: title(20) + spacing(8) + single_row(28) + bottom_padding(8) = 64pt
     UIView *golfCard = [self createCardWithTitle:@"GOLF SETTINGS"
                                            frame:CGRectMake(CARD_MARGIN, startY,
-                                                           cardWidth, 100)];
+                                                           cardWidth, 64)];
     [self.view addSubview:golfCard];
 
-    // Fairway - label and control on same row
-    // Starting at y=28 (title 20 + spacing 8)
-    UILabel *fairwayLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, 60, 28)];
+    // Single row: Fairway label + control + Stimp label + field
+    CGFloat rowY = 28;
+
+    UILabel *fairwayLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, rowY, labelWidth, 28)];
     fairwayLabel.text = @"Fairway";
     fairwayLabel.textColor = APP_COLOR_SECONDARY_TEXT;
     fairwayLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [golfCard addSubview:fairwayLabel];
 
+    // Segmented control
+    CGFloat segmentWidth = 200;
     self.fairwayControl = [[UISegmentedControl alloc] initWithItems:@[@"Slow", @"Med", @"Fast", @"Links"]];
-    self.fairwayControl.frame = CGRectMake(70, 28, cardWidth - 70 - CARD_PADDING, 28);
+    self.fairwayControl.frame = CGRectMake(fieldStartX, rowY, segmentWidth, 28);
     self.fairwayControl.selectedSegmentIndex = 1;
     [self.fairwayControl addTarget:self action:@selector(fairwayControlChanged:) forControlEvents:UIControlEventValueChanged];
     [golfCard addSubview:self.fairwayControl];
 
-    // Stimp - label and field on same row
-    // Starting at y=64 (28 + 28 + spacing 8)
-    UILabel *stimpLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 64, 90, 28)];
-    stimpLabel.text = @"Putting Stimp";
+    // Stimp label and field
+    CGFloat stimpLabelX = fieldStartX + segmentWidth + 10;
+    UILabel *stimpLabel = [[UILabel alloc] initWithFrame:CGRectMake(stimpLabelX, rowY, 45, 28)];
+    stimpLabel.text = @"Stimp";
     stimpLabel.textColor = APP_COLOR_SECONDARY_TEXT;
     stimpLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [golfCard addSubview:stimpLabel];
 
-    self.stimpField = [[UITextField alloc] initWithFrame:CGRectMake(cardWidth - CARD_PADDING - 80, 64, 80, 28)];
+    CGFloat fieldWidth = 60;
+    self.stimpField = [[UITextField alloc] initWithFrame:CGRectMake(cardWidth - CARD_PADDING - fieldWidth, rowY, fieldWidth, 28)];
     self.stimpField.borderStyle = UITextBorderStyleRoundedRect;
     self.stimpField.textAlignment = NSTextAlignmentCenter;
-    self.stimpField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
+    self.stimpField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [golfCard addSubview:self.stimpField];
 
     self.stimpPicker = [[UIPickerView alloc] init];
@@ -169,26 +177,25 @@
 
     // Card 2: GSPro
     // Height calculation: title(20) + spacing(8) + ip_row(28) + bottom_padding(8) = 64pt
-    CGFloat card2Y = startY + 100 + SPACING_SMALL;
+    CGFloat card2Y = startY + 64 + SPACING_SMALL;
     UIView *gsproCard = [self createCardWithTitle:@"GSPRO"
                                             frame:CGRectMake(CARD_MARGIN, card2Y,
                                                             cardWidth, 64)];
     [self.view addSubview:gsproCard];
 
     // IP label, field, and status all on same row
-    // Starting at y=28 (title 20 + spacing 8)
-    UILabel *ipLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, 25, 28)];
+    UILabel *ipLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, labelWidth, 28)];
     ipLabel.text = @"IP";
     ipLabel.textColor = APP_COLOR_SECONDARY_TEXT;
     ipLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [gsproCard addSubview:ipLabel];
 
-    self.ipField = [[UITextField alloc] initWithFrame:CGRectMake(35, 28, 140, 28)];
+    self.ipField = [[UITextField alloc] initWithFrame:CGRectMake(fieldStartX, 28, 150, 28)];
     self.ipField.borderStyle = UITextBorderStyleRoundedRect;
     self.ipField.placeholder = @"192.168.x.x";
     self.ipField.keyboardType = UIKeyboardTypeDecimalPad;
     self.ipField.delegate = self;
-    self.ipField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+    self.ipField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
 
     UIToolbar *ipToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 44)];
     ipToolbar.barStyle = UIBarStyleDefault;
@@ -199,7 +206,7 @@
     self.ipField.inputAccessoryView = ipToolbar;
     [gsproCard addSubview:self.ipField];
 
-    self.connectionStateLabel = [[UILabel alloc] initWithFrame:CGRectMake(180, 30, cardWidth - 180 - CARD_PADDING, 24)];
+    self.connectionStateLabel = [[UILabel alloc] initWithFrame:CGRectMake(fieldStartX + 160, 30, cardWidth - fieldStartX - 160 - CARD_PADDING, 24)];
     self.connectionStateLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption2];
     self.connectionStateLabel.textAlignment = NSTextAlignmentLeft;
     [gsproCard addSubview:self.connectionStateLabel];
@@ -212,23 +219,22 @@
                                                             cardWidth, 146)];
     [self.view addSubview:redisCard];
 
-    // Host - label and field on same row
-    // Starting at y=28 (title 20 + spacing 8)
-    UILabel *hostLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, 40, 28)];
+    // Host - label and field aligned with other cards
+    UILabel *hostLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 28, labelWidth, 28)];
     hostLabel.text = @"Host";
     hostLabel.textColor = APP_COLOR_SECONDARY_TEXT;
     hostLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [redisCard addSubview:hostLabel];
 
-    self.redisHostField = [[UITextField alloc] initWithFrame:CGRectMake(50, 28,
-                                                                         cardWidth - 50 - CARD_PADDING, 28)];
+    self.redisHostField = [[UITextField alloc] initWithFrame:CGRectMake(fieldStartX, 28,
+                                                                         cardWidth - fieldStartX - CARD_PADDING, 28)];
     self.redisHostField.borderStyle = UITextBorderStyleRoundedRect;
     self.redisHostField.placeholder = @"redis-xxxxx.xxx.cloud.redislabs.com";
     self.redisHostField.keyboardType = UIKeyboardTypeURL;
     self.redisHostField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     self.redisHostField.autocorrectionType = UITextAutocorrectionTypeNo;
     self.redisHostField.delegate = self;
-    self.redisHostField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption2];
+    self.redisHostField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
 
     UIToolbar *hostToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 44)];
     hostToolbar.barStyle = UIBarStyleDefault;
@@ -239,15 +245,14 @@
     self.redisHostField.inputAccessoryView = hostToolbar;
     [redisCard addSubview:self.redisHostField];
 
-    // Port and Password on same row
-    // Starting at y=64 (28 + 28 + spacing 8)
-    UILabel *portLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 64, 30, 28)];
+    // Port and Password on same row - aligned
+    UILabel *portLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 64, labelWidth, 28)];
     portLabel.text = @"Port";
     portLabel.textColor = APP_COLOR_SECONDARY_TEXT;
     portLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [redisCard addSubview:portLabel];
 
-    self.redisPortField = [[UITextField alloc] initWithFrame:CGRectMake(40, 64, 70, 28)];
+    self.redisPortField = [[UITextField alloc] initWithFrame:CGRectMake(fieldStartX, 64, 70, 28)];
     self.redisPortField.borderStyle = UITextBorderStyleRoundedRect;
     self.redisPortField.placeholder = @"12647";
     self.redisPortField.keyboardType = UIKeyboardTypeNumberPad;
@@ -264,14 +269,16 @@
     self.redisPortField.inputAccessoryView = portToolbar;
     [redisCard addSubview:self.redisPortField];
 
-    UILabel *passLabel = [[UILabel alloc] initWithFrame:CGRectMake(120, 64, 35, 28)];
+    CGFloat passLabelX = fieldStartX + 80;
+    UILabel *passLabel = [[UILabel alloc] initWithFrame:CGRectMake(passLabelX, 64, 40, 28)];
     passLabel.text = @"Pass";
     passLabel.textColor = APP_COLOR_SECONDARY_TEXT;
     passLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     [redisCard addSubview:passLabel];
 
-    self.redisPasswordField = [[UITextField alloc] initWithFrame:CGRectMake(160, 64,
-                                                                             cardWidth - 160 - CARD_PADDING, 28)];
+    CGFloat passFieldX = passLabelX + 45;
+    self.redisPasswordField = [[UITextField alloc] initWithFrame:CGRectMake(passFieldX, 64,
+                                                                             cardWidth - passFieldX - CARD_PADDING, 28)];
     self.redisPasswordField.borderStyle = UITextBorderStyleRoundedRect;
     self.redisPasswordField.placeholder = @"password";
     self.redisPasswordField.secureTextEntry = YES;
@@ -288,7 +295,6 @@
     [redisCard addSubview:self.redisPasswordField];
 
     // Test button
-    // Starting at y=100 (64 + 28 + spacing 8)
     self.redisTestButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.redisTestButton.frame = CGRectMake(CARD_PADDING, 100, cardWidth - (CARD_PADDING * 2), 28);
     [self.redisTestButton setTitle:@"Test Connection" forState:UIControlStateNormal];
@@ -300,7 +306,6 @@
     [redisCard addSubview:self.redisTestButton];
 
     // Status label at bottom
-    // Starting at y=132 (100 + 28 + spacing 4)
     self.redisStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(CARD_PADDING, 132,
                                                                        cardWidth - (CARD_PADDING * 2), 10)];
     self.redisStatusLabel.font = [UIFont systemFontOfSize:8];
@@ -328,6 +333,7 @@
     themeSwitch.transform = CGAffineTransformMakeScale(0.65, 0.65); // Scale down to match mode pill height (21pt)
     themeSwitch.frame = CGRectMake(self.view.bounds.size.width - 145, 7, 51 * 0.65, 31 * 0.65);
     themeSwitch.on = (self.view.window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
+    themeSwitch.tag = 997; // Tag to find later
     [themeSwitch addTarget:self action:@selector(toggleTheme:) forControlEvents:UIControlEventValueChanged];
     [headerView addSubview:themeSwitch];
 
@@ -340,8 +346,8 @@
     [headerView addSubview:sunIcon];
 
     // Add moon icon on right side of switch (SF Symbol)
-    // Position at far right: switch_x + switch_width - icon_width - 3px padding
-    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 145 + (51 * 0.65) - 15, 9.5, 12, 12)];
+    // Position at far right: switch width is 33.15, icon starts at 24px from left edge
+    UIImageView *moonIcon = [[UIImageView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 145 + 24, 9.5, 12, 12)];
     moonIcon.image = [UIImage systemImageNamed:@"moon.fill"];
     moonIcon.tintColor = [UIColor systemYellowColor];
     moonIcon.alpha = themeSwitch.isOn ? 1.0 : 0.3; // Dim when in light mode
@@ -412,6 +418,26 @@
 
     // Update status
     [self updateRedisStatus];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+
+    // Update theme switch state to match current window theme
+    UISwitch *themeSwitch = (UISwitch *)[self.view viewWithTag:997];
+    if (themeSwitch) {
+        UIWindow *window = self.view.window;
+        if (window) {
+            BOOL isDarkMode = (window.overrideUserInterfaceStyle == UIUserInterfaceStyleDark);
+            [themeSwitch setOn:isDarkMode animated:NO];
+
+            // Update icon alphas
+            UIImageView *sunIcon = (UIImageView *)[self.view viewWithTag:999];
+            UIImageView *moonIcon = (UIImageView *)[self.view viewWithTag:998];
+            sunIcon.alpha = isDarkMode ? 0.3 : 1.0;
+            moonIcon.alpha = isDarkMode ? 1.0 : 0.3;
+        }
+    }
 }
 
 - (void)dealloc {
