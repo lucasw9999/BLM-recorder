@@ -7,6 +7,7 @@ NSString * const CameraManagerNewFrameNotification = @"CameraManagerNewFrameNoti
 @interface CameraManager ()
 
 @property (nonatomic, assign) BOOL isProcessingFrame;
+@property (nonatomic, assign) BOOL hasLoggedFirstFrame;
 
 @property (nonatomic, strong, readwrite) AVCaptureSession *captureSession;
 @property (nonatomic, strong, readwrite) AVCaptureVideoDataOutput *videoOutput;
@@ -33,6 +34,7 @@ NSString * const CameraManagerNewFrameNotification = @"CameraManagerNewFrameNoti
         // Create a dedicated serial queue for camera setup & frames
         _cameraQueue = dispatch_queue_create("com.yourapp.CameraQueue", DISPATCH_QUEUE_SERIAL);
         _cameraIsRunning = NO;
+        _hasLoggedFirstFrame = NO;
     }
     return self;
 }
@@ -41,11 +43,11 @@ NSString * const CameraManagerNewFrameNotification = @"CameraManagerNewFrameNoti
 
 - (void)startCamera {
     if (self.cameraIsRunning) {
-        NSLog(@"CameraManager: startCamera called but camera is already running.");
         return;
     }
     self.cameraIsRunning = YES;
-    
+    self.hasLoggedFirstFrame = NO; // Reset flag when camera starts
+
     // Start camera setup on a background queue to avoid blocking main thread
     dispatch_async(self.cameraQueue, ^{
         [self setupCaptureSession];
@@ -54,16 +56,14 @@ NSString * const CameraManagerNewFrameNotification = @"CameraManagerNewFrameNoti
 
 - (void)stopCamera {
     if (!self.cameraIsRunning) {
-        NSLog(@"CameraManager: stopCamera called but camera is not running.");
         return;
     }
     self.cameraIsRunning = NO;
-    
+
     dispatch_async(self.cameraQueue, ^{
         [self.captureSession stopRunning];
         self.captureSession = nil;
         self.videoOutput = nil;
-        NSLog(@"CameraManager: Camera stopped");
     });
 }
 
@@ -71,8 +71,6 @@ NSString * const CameraManagerNewFrameNotification = @"CameraManagerNewFrameNoti
 
 // Mimics your "ViewController" logic for ultra-wide, exposure, etc.
 - (void)setupCaptureSession {
-    NSLog(@"CameraManager: Setting up capture session on background thread.");
-    
     AVCaptureSession *session = [[AVCaptureSession alloc] init];
     session.sessionPreset = AVCaptureSessionPresetHigh;
     
@@ -144,7 +142,6 @@ NSString * const CameraManagerNewFrameNotification = @"CameraManagerNewFrameNoti
     
     // Finally, start running
     [session startRunning];
-    NSLog(@"CameraManager: Session started running.");
 }
 
 - (AVCaptureDevice *)getUltraWideCameraIfAvailable {
@@ -169,7 +166,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         return;
     }
     self.isProcessingFrame = YES;
-    
+
     @autoreleasepool {
         // Convert sampleBuffer -> UIImage
         UIImage *frame = [self imageFromSampleBuffer:sampleBuffer];
@@ -177,7 +174,13 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
             self.isProcessingFrame = NO;
             return;
         }
-        
+
+        // Log first frame received
+        if (!self.hasLoggedFirstFrame) {
+            NSLog(@"Camera active: First frame captured");
+            self.hasLoggedFirstFrame = YES;
+        }
+
         NSDictionary *userInfo = @{@"frame": frame};
         [[NSNotificationCenter defaultCenter] postNotificationName:CameraManagerNewFrameNotification
                                                             object:nil

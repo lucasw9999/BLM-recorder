@@ -58,18 +58,18 @@
     "model": "carry-units"
   },
   {
-    "name": "total-spin",
+    "name": "side-spin",
     "rect": [
       0.415,
       0.5578125,
-      0.235,
+      0.26,
       0.19
     ],
     "format": [
-      "23",
-      "456",
-      "7898",
-      "10234",
+      "23L",
+      "58R",
+      "456L",
+      "789R",
       "-"
     ]
   },
@@ -117,32 +117,19 @@
     "model": "hla-direction"
   },
   {
-    "name": "spin-axis",
+    "name": "back-spin",
     "rect": [
-      0.68125,
+      0.69,
       0.5690625,
-      0.18875,
+      0.26,
       0.1975
     ],
     "format": [
       "0",
       "12",
+      "456",
+      "7898",
       "- - -"
     ]
-  },
-  {
-    "name": "spin-axis-direction",
-    "rect": [
-      0.9,
-      0.6090625,
-      0.08,
-      0.1525
-    ],
-    "format": [
-      "L",
-      "R",
-      "-"
-    ],
-    "model": "spin-axis-direction"
   }
 ]

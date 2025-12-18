@@ -3,136 +3,112 @@
 #import "ImagesViewController.h"
 #import "DebugViewController.h"
 #import "SettingsViewController.h"
+#import "CameraManager.h"
 #import "Theme.h"
 
 @interface MainContainerViewController ()
-@property (nonatomic, strong) UIView *contentContainer;
-@property (nonatomic, strong) UIViewController *currentChildVC;
-@property (nonatomic, assign) NSInteger selectedTabIndex;
-@property (nonatomic, strong) NSArray<Class> *viewControllerClasses;
+@property (nonatomic, strong) UILabel *titleLabel;
+@property (nonatomic, strong) UISegmentedControl *segmentedControl;
+@property (nonatomic, strong) UIView *containerView;
+@property (nonatomic, strong) NSArray<UIViewController *> *viewControllers;
+@property (nonatomic, strong) UIViewController *currentViewController;
 @end
 
 @implementation MainContainerViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    NSLog(@"[STARTUP] MainContainerViewController viewDidLoad starting");
+
     self.view.backgroundColor = APP_COLOR_BG;
 
-    self.selectedTabIndex = 0; // Start with first tab (Play)
+    // Create view controllers
+    LaunchMonitorDataViewController *playVC = [[LaunchMonitorDataViewController alloc] init];
+    ImagesViewController *monitorVC = [[ImagesViewController alloc] init];
+    SettingsViewController *settingsVC = [[SettingsViewController alloc] init];
 
-    // Define the view controller classes in tab order
-    self.viewControllerClasses = @[
-        [LaunchMonitorDataViewController class],  // 1st: Play
-        [ImagesViewController class],              // 2nd: Monitor
-        [SettingsViewController class]             // 3rd: Settings
-    ];
+    self.viewControllers = @[playVC, monitorVC, settingsVC];
 
-    [self setupContentContainer];
+    // Create app title/logo at top left
+    self.titleLabel = [[UILabel alloc] init];
+    self.titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.titleLabel.text = @"BLM Recorder";
+    self.titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
+    self.titleLabel.textColor = APP_COLOR_TEXT;
+    self.titleLabel.accessibilityLabel = @"BLM Recorder";
+    [self.view addSubview:self.titleLabel];
 
-    // Load default page (Play tab)
-    [self switchToChildViewController:[LaunchMonitorDataViewController new] tabIndex:0 animated:NO isForward:YES];
-    NSLog(@"[STARTUP] MainContainerViewController viewDidLoad completed");
+    // Create segmented control at top right for landscape-optimized navigation
+    self.segmentedControl = [[UISegmentedControl alloc] initWithItems:@[@"Play", @"Monitor", @"Settings"]];
+    self.segmentedControl.selectedSegmentIndex = 0;
+    self.segmentedControl.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.segmentedControl addTarget:self action:@selector(segmentChanged:) forControlEvents:UIControlEventValueChanged];
+
+    // Accessibility
+    self.segmentedControl.accessibilityLabel = @"Screen selector";
+    self.segmentedControl.accessibilityHint = @"Choose between Play, Monitor, and Settings screens";
+
+    [self.view addSubview:self.segmentedControl];
+
+    // Container view for child view controllers
+    self.containerView = [[UIView alloc] init];
+    self.containerView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.containerView];
+
+    // Layout constraints
+    UILayoutGuide *safeArea = self.view.safeAreaLayoutGuide;
+    [NSLayoutConstraint activateConstraints:@[
+        // Title label at top left
+        [self.titleLabel.topAnchor constraintEqualToAnchor:safeArea.topAnchor constant:8],
+        [self.titleLabel.leadingAnchor constraintEqualToAnchor:safeArea.leadingAnchor constant:16],
+        [self.titleLabel.centerYAnchor constraintEqualToAnchor:self.segmentedControl.centerYAnchor],
+
+        // Segmented control at top right
+        [self.segmentedControl.topAnchor constraintEqualToAnchor:safeArea.topAnchor constant:8],
+        [self.segmentedControl.trailingAnchor constraintEqualToAnchor:safeArea.trailingAnchor constant:-16],
+        [self.segmentedControl.leadingAnchor constraintGreaterThanOrEqualToAnchor:self.titleLabel.trailingAnchor constant:16],
+
+        // Container view fills remaining space
+        [self.containerView.topAnchor constraintEqualToAnchor:self.segmentedControl.bottomAnchor constant:8],
+        [self.containerView.leadingAnchor constraintEqualToAnchor:safeArea.leadingAnchor],
+        [self.containerView.trailingAnchor constraintEqualToAnchor:safeArea.trailingAnchor],
+        [self.containerView.bottomAnchor constraintEqualToAnchor:safeArea.bottomAnchor]
+    ]];
+
+    // Show initial view controller (Play)
+    [self showViewController:playVC];
 }
 
-- (void)setupContentContainer {
-    // Full width content container (no sidebar)
-    self.contentContainer = [[UIView alloc] initWithFrame:self.view.bounds];
-    self.contentContainer.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.contentContainer.backgroundColor = APP_COLOR_BG;
-    [self.view addSubview:self.contentContainer];
-}
-
-- (void)switchToChildViewController:(UIViewController *)newVC tabIndex:(NSInteger)tabIndex animated:(BOOL)animated isForward:(BOOL)isForward {
-    // Prevent switching to same tab
-    if (tabIndex == self.selectedTabIndex && self.currentChildVC) {
-        return;
-    }
-
-    UIViewController *oldVC = self.currentChildVC;
-    self.currentChildVC = newVC;
-    self.selectedTabIndex = tabIndex;
-
-    // Setup the new view controller
-    [self addChildViewController:newVC];
-    newVC.view.frame = self.contentContainer.bounds;
-    newVC.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-
-    // Set parent reference for swipe navigation
-    [self setParentReferenceForViewController:newVC];
-
-    if (animated && oldVC) {
-        // Determine slide direction based on navigation direction (not index comparison)
-        CGFloat slideDistance = self.contentContainer.bounds.size.height;
-        BOOL slideDown = isForward; // Forward navigation slides down, backward slides up
-
-        // Position new view off-screen (vertically)
-        newVC.view.frame = CGRectOffset(self.contentContainer.bounds,
-                                       0, slideDown ? slideDistance : -slideDistance);
-        [self.contentContainer addSubview:newVC.view];
-
-        // Animate the vertical transition
-        [UIView animateWithDuration:0.3
-                              delay:0
-                            options:UIViewAnimationOptionCurveEaseInOut
-                         animations:^{
-            // Slide old view out (vertically)
-            oldVC.view.frame = CGRectOffset(oldVC.view.frame,
-                                          0, slideDown ? -slideDistance : slideDistance);
-            // Slide new view in
-            newVC.view.frame = self.contentContainer.bounds;
-        } completion:^(BOOL finished) {
-            // Clean up old view controller
-            [oldVC willMoveToParentViewController:nil];
-            [oldVC.view removeFromSuperview];
-            [oldVC removeFromParentViewController];
-            [newVC didMoveToParentViewController:self];
-        }];
-    } else {
-        // No animation - immediate switch
-        if (oldVC) {
-            [oldVC willMoveToParentViewController:nil];
-            [oldVC.view removeFromSuperview];
-            [oldVC removeFromParentViewController];
+- (void)segmentChanged:(UISegmentedControl *)sender {
+    NSInteger index = sender.selectedSegmentIndex;
+    if (index >= 0 && index < self.viewControllers.count) {
+        // Stop camera when entering Settings (index 2)
+        if (index == 2) {
+            [[CameraManager shared] stopCamera];
+        } else {
+            // Start camera when leaving Settings
+            [[CameraManager shared] startCamera];
         }
-        [self.contentContainer addSubview:newVC.view];
-        [newVC didMoveToParentViewController:self];
+
+        [self showViewController:self.viewControllers[index]];
     }
 }
 
-- (void)setParentReferenceForViewController:(UIViewController *)viewController {
-    if ([viewController isKindOfClass:[LaunchMonitorDataViewController class]]) {
-        ((LaunchMonitorDataViewController *)viewController).parentContainer = self;
-    } else if ([viewController isKindOfClass:[ImagesViewController class]]) {
-        ((ImagesViewController *)viewController).parentContainer = self;
-    } else if ([viewController isKindOfClass:[DebugViewController class]]) {
-        ((DebugViewController *)viewController).parentContainer = self;
-    } else if ([viewController isKindOfClass:[SettingsViewController class]]) {
-        ((SettingsViewController *)viewController).parentContainer = self;
+- (void)showViewController:(UIViewController *)viewController {
+    // Remove current view controller
+    if (self.currentViewController) {
+        [self.currentViewController willMoveToParentViewController:nil];
+        [self.currentViewController.view removeFromSuperview];
+        [self.currentViewController removeFromParentViewController];
     }
-}
 
-- (NSInteger)indexForViewController:(UIViewController *)viewController {
-    for (NSInteger i = 0; i < self.viewControllerClasses.count; i++) {
-        if ([viewController isKindOfClass:self.viewControllerClasses[i]]) {
-            return i;
-        }
-    }
-    return 0;
-}
+    // Add new view controller
+    [self addChildViewController:viewController];
+    viewController.view.frame = self.containerView.bounds;
+    viewController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [self.containerView addSubview:viewController.view];
+    [viewController didMoveToParentViewController:self];
 
-#pragma mark - Tab Switching Methods
-
-- (void)switchToNextTab {
-    NSInteger nextTab = (self.selectedTabIndex + 1) % self.viewControllerClasses.count;
-    UIViewController *newVC = [[self.viewControllerClasses[nextTab] alloc] init];
-    [self switchToChildViewController:newVC tabIndex:nextTab animated:YES isForward:YES];
-}
-
-- (void)switchToPreviousTab {
-    NSInteger previousTab = (self.selectedTabIndex - 1 + self.viewControllerClasses.count) % self.viewControllerClasses.count;
-    UIViewController *newVC = [[self.viewControllerClasses[previousTab] alloc] init];
-    [self switchToChildViewController:newVC tabIndex:previousTab animated:YES isForward:NO];
+    self.currentViewController = viewController;
 }
 
 @end

@@ -16,16 +16,27 @@
     [super viewDidLoad];
     self.view.backgroundColor = APP_COLOR_BG;
 
-    // Add header with title and mode
-    [self setupHeader];
+    // Navigation bar is provided by UINavigationController (HIG-compliant)
+    // No custom header needed
 
-    // UIImageView for displaying the latest processed frame (adjusted for smaller header)
-    CGFloat headerHeight = 55; // 20 for top offset + 35 for smaller header height
-    CGRect cameraFrame = CGRectMake(0, headerHeight, self.view.bounds.size.width, self.view.bounds.size.height - headerHeight);
-    self.cameraView = [[UIImageView alloc] initWithFrame:cameraFrame];
+    // UIImageView for displaying the latest processed frame
+    self.cameraView = [[UIImageView alloc] init];
+    self.cameraView.translatesAutoresizingMaskIntoConstraints = NO;
     self.cameraView.contentMode = UIViewContentModeScaleAspectFit;
     self.cameraView.clipsToBounds = YES;
+    self.cameraView.isAccessibilityElement = YES;
+    self.cameraView.accessibilityLabel = @"Camera debug view";
+    self.cameraView.accessibilityHint = @"Shows camera feed with detected screen corners highlighted in green";
     [self.view addSubview:self.cameraView];
+
+    // Auto Layout constraints
+    UILayoutGuide *safeArea = self.view.safeAreaLayoutGuide;
+    [NSLayoutConstraint activateConstraints:@[
+        [self.cameraView.topAnchor constraintEqualToAnchor:safeArea.topAnchor],
+        [self.cameraView.bottomAnchor constraintEqualToAnchor:safeArea.bottomAnchor],
+        [self.cameraView.leadingAnchor constraintEqualToAnchor:safeArea.leadingAnchor],
+        [self.cameraView.trailingAnchor constraintEqualToAnchor:safeArea.trailingAnchor]
+    ]];
 
     // Listen for new frames and new corners
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -39,36 +50,6 @@
                                                object:nil];
 
     self.corners = [[DataModel shared].screenCorners copy];
-
-    // Add swipe gestures for tab switching
-    [self setupSwipeGestures];
-}
-
-- (void)setupHeader {
-    // Header container - smaller height to save space
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 20, self.view.bounds.size.width, 35)];
-    headerView.backgroundColor = APP_COLOR_BG;
-    [self.view addSubview:headerView];
-
-    // BLM Recorder title (left) - smaller and adjusted position
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 5, 200, 25)];
-    titleLabel.text = @"BLM Recorder";
-    titleLabel.textColor = [UIColor whiteColor];
-    titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
-    [headerView addSubview:titleLabel];
-
-    // Mode pill (right) - smaller and adjusted position
-    UIView *modePill = [[UIView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 70, 7, 50, 21)];
-    modePill.backgroundColor = APP_COLOR_ACCENT;
-    modePill.layer.cornerRadius = 10;
-    [headerView addSubview:modePill];
-
-    UILabel *modeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 50, 21)];
-    modeLabel.text = @"CAMERA";
-    modeLabel.textColor = [UIColor whiteColor];
-    modeLabel.font = [UIFont systemFontOfSize:9 weight:UIFontWeightSemibold];
-    modeLabel.textAlignment = NSTextAlignmentCenter;
-    [modePill addSubview:modeLabel];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -134,34 +115,6 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-#pragma mark - Swipe Gestures
-
-- (void)setupSwipeGestures {
-    // Swipe up gesture (previous tab)
-    UISwipeGestureRecognizer *swipeUp = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(swipeUp:)];
-    swipeUp.direction = UISwipeGestureRecognizerDirectionUp;
-    [self.view addGestureRecognizer:swipeUp];
-
-    // Swipe down gesture (next tab)
-    UISwipeGestureRecognizer *swipeDown = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(swipeDown:)];
-    swipeDown.direction = UISwipeGestureRecognizerDirectionDown;
-    [self.view addGestureRecognizer:swipeDown];
-}
-
-- (void)swipeUp:(UISwipeGestureRecognizer *)gesture {
-    // Switch to next tab
-    if (self.parentContainer) {
-        [self.parentContainer switchToNextTab];
-    }
-}
-
-- (void)swipeDown:(UISwipeGestureRecognizer *)gesture {
-    // Switch to previous tab
-    if (self.parentContainer) {
-        [self.parentContainer switchToPreviousTab];
-    }
 }
 
 @end

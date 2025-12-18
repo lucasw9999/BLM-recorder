@@ -4,7 +4,7 @@
 #define SAVE_DEBUG_DATA 0 // Set to 1 to enable, 0 to disable
 
 // Performance timing logs
-#define ENABLE_PERFORMANCE_LOGGING 1 // Set to 1 to enable timing logs, 0 to disable
+#define ENABLE_PERFORMANCE_LOGGING 0 // Set to 1 to enable timing logs, 0 to disable
 
 #if SAVE_DEBUG_DATA
     #define DEBUG_SAVE_SHOT_DATA(image, data, shotNumber) \

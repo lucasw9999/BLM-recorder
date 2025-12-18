@@ -43,9 +43,9 @@ static NSString* validateBallData(NSDictionary *data) {
     NSString *hlaDirection = [validDirection containsObject:data[@"hla-direction"]] ? data[@"hla-direction"] : @"";
     double carry = toDouble(data[@"carry"]);
     NSString *carryUnits = [validCarryUnits containsObject:data[@"carry-units"]] ? data[@"carry-units"] : @"";
-    int totalSpin = toInt(data[@"total-spin"]);
-    int spinAxis = toInt(data[@"spin-axis"]);
-    
+    NSString *sideSpinStr = data[@"side-spin"] ?: @"";
+    NSString *backSpinStr = data[@"back-spin"] ?: @"";
+
     // Top level validation logic
     if(ballSpeed == 0)
         return [NSString stringWithFormat:@"invalid: ball-speed = %@", data[@"ball-speed"]];
@@ -55,12 +55,12 @@ static NSString* validateBallData(NSDictionary *data) {
         return [NSString stringWithFormat:@"invalid: hla-direction = %@", data[@"hla-direction"]];
     if([carryUnits isEqualToString:@""])
         return [NSString stringWithFormat:@"invalid: carry-units = %@", data[@"carry-units"]];
-    
-    if (carry == 0 && totalSpin == 0) {
+
+    if (carry == 0 && [sideSpinStr isEqualToString:@""] && [backSpinStr isEqualToString:@""]) {
         return @"putt";
     }
-    
-    if (carry != 0 || totalSpin != 0 || spinAxis != 0) {
+
+    if (carry != 0 || ![sideSpinStr isEqualToString:@""] || ![backSpinStr isEqualToString:@""]) {
         return @"shot";
     }
     
@@ -98,18 +98,30 @@ static NSDictionary* translateBallResults(NSDictionary* ballResults, bool isPutt
     
     float carryDistance = [ballResults[@"carry"] floatValue];
     processedResults[@"CarryDistance"] = @(carryDistance);
-    
-    float totalSpin = [ballResults[@"total-spin"] floatValue];
-    processedResults[@"TotalSpin"] = @(totalSpin);
-    
-    NSString *spinAxisDirection = ballResults[@"spin-axis-direction"] ?: @"";
-    float spinAxis = [ballResults[@"spin-axis"] floatValue];
-    if ([@"L" isEqualToString:spinAxisDirection]) {
-        spinAxis *= -1.0;
-    } else if (![@"R" isEqualToString:spinAxisDirection]) {
-        NSLog(@"Warning: Unexpected spin-axis-direction value: '%@'", spinAxisDirection);
+
+    // Parse side-spin value which includes L/R direction (e.g., "58L" or "45R")
+    NSString *sideSpinString = ballResults[@"side-spin"] ?: @"";
+    float sideSpin = 0;
+    if (sideSpinString.length > 0) {
+        // Check if last character is L or R
+        unichar lastChar = [sideSpinString characterAtIndex:sideSpinString.length - 1];
+        if (lastChar == 'L' || lastChar == 'R') {
+            // Extract numeric part
+            NSString *numericPart = [sideSpinString substringToIndex:sideSpinString.length - 1];
+            sideSpin = [numericPart floatValue];
+            // L = negative, R = positive
+            if (lastChar == 'L') {
+                sideSpin *= -1.0;
+            }
+        } else {
+            // No direction letter, just parse as number
+            sideSpin = [sideSpinString floatValue];
+        }
     }
-    processedResults[@"SpinAxis"] = @(spinAxis);
+    processedResults[@"SideSpin"] = @(sideSpin);
+
+    float backSpin = [ballResults[@"back-spin"] floatValue];
+    processedResults[@"BackSpin"] = @(backSpin);
     
     // Populate total distance and offline amounts
     processedResults[@"IsPutt"] = @(isPutt);
